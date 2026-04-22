@@ -12,9 +12,9 @@ export default defineConfig({
 				'zh-CN': 'Hermes/Agent',
 				en: 'Hermes/Agent',
 			},
-			defaultLocale: 'zh-CN',
+			defaultLocale: 'root',
 			locales: {
-				'zh-CN': { label: '中文', lang: 'zh-CN' },
+				root: { label: '中文', lang: 'zh-CN' },
 				en: { label: 'English', lang: 'en' },
 			},
 			customCss: ['./src/styles/fonts.css', './src/styles/theme.css'],
