@@ -2,6 +2,7 @@
 
 - **日期**：2026-04-23
 - **状态**：spec 草案（待用户复审）
+- **域名**：**hermesagentguide.online**（已拍板）
 - **下一步**：spec 审核通过后，调用 `superpowers:writing-plans` 生成实施计划
 
 ---
@@ -53,18 +54,20 @@
 
 ### 4.1 核心内容：8 篇长文
 
-沿用对标站"7 天 + 迁移"结构，每篇独立可读，15~20 分钟读完：
+**章节顺序严格参照 hermes101.dev/7-days/ 的拓扑**（他们的编排经过学习路径推敲），但**每篇标题重写**，避免照搬文字。章节时长在教程写完后根据实际字数/步骤量再定，此处不预设。
 
-| # | 标题（中） | 标题（EN） | 时长 | 备注 |
+| # | 我们的标题（中） | 我们的标题（EN） | 对应 101 章节（仅参考） | 验证成果 |
 |---|---|---|---|---|
-| Day 01 | 安装 Hermes | Install Hermes Agent | 60 min | Mac / Linux / WSL 三平台都覆盖 |
-| Day 02 | 接入 Telegram | Connect Telegram Bot | 45 min | BotFather → token → .env |
-| Day 03 | 装第一个 Skill | Install a Skill | 60 min | 从官方 skills hub 装 |
-| Day 04 | 持久记忆 | Persistent Memory | 75 min | **里程碑**：这是 Hermes 的核心差异化 |
-| Day 05 | 自动化调度 | Scheduled Tasks | 50 min | 自然语言 cron |
-| Day 06 | MCP / 工具集 | MCP & Toolsets | 60 min | 浏览器 / FS / GitHub 等 |
-| Day 07 | 沙箱与安全 | Sandbox & Security | 40 min | Docker / SSH 等 5 种后端 |
-| Bonus | 从 OpenClaw 迁移 | Migrate from OpenClaw | 90 min | 原创内容，亲测过 |
+| Day 01 | 跑起来：Hermes 的第一次对话 | Boot Up: Your First Chat with Hermes | 安装 Hermes，说出第一句话 | `hermes version` 有输出 + 本地一次对话成功 |
+| Day 02 | 挑个大脑：模型选型与 API 接入 | Pick a Brain: Model & API Setup | 配置模型与 API Key | Agent 能调 LLM 并给出有意义回答 |
+| Day 03 | 入驻聊天室：Telegram / Discord / Slack | Go Social: Messaging Platforms | 连接消息平台机器人 | 在真实聊天 app 里 @ 机器人并获得回复 |
+| Day 04 | 让 Agent 动手：内置工具实战 | Give It Hands: Using Built-in Tools | 调用内置工具 | 成功触发 ≥2 个内置工具 |
+| Day 05 | 教它新本事：安装第一个 Skill | Teach a Trick: Installing Your First Skill | 安装并使用技能 | **里程碑**：从 hub 装一个 skill 并对话触发 |
+| Day 06 | 记忆与状态：会话、压缩、备份 | Memory & State: Sessions, Compression, Backup | 记忆、会话与备份 | 会话恢复 + 备份导出/导入成功 |
+| Day 07 | 全自动化：定时任务与故障排查 | Full Auto: Scheduling & Diagnostics | 自动化、诊断与迁移（我们把迁移单拎出来） | 自然语言调度 + 日志定位典型错误 |
+| Bonus | 从 OpenClaw 搬家：平滑迁移指南 | Leaving OpenClaw: A Smooth Migration | （101 在 Day 7 里简写；我们做加长版） | 迁移映射表 + 作者亲测 5 个真实案例 |
+
+**关于时长**：每篇写完、截稿后根据字数和步骤数标注（例：< 1500 字 → ~10 min；多平台分支 → 每分支算时长）。UI 上时长用 `IBM Plex Mono` 等宽字体展示。
 
 每篇文末必带：
 - **你应该能观察到**（预期命令输出 / 日志 / 对话截片）
@@ -182,32 +185,78 @@
 
 ---
 
-## 9. 技术方案（待决，仅列选项）
+## 9. 技术方案（2026-04-23 决议）
 
-按 §1 目标"抢先发时间窗口 + 作者是编程新手"，下列三个选项里：
+### 9.0 决议
 
-### 选项 A：Astro + Starlight（官方文档主题）
-- ✅ 8 篇教程的 TOC / 目录 / 代码高亮 / i18n / 暗色模式全开箱即用
-- ❌ Starlight 默认观感很"Vue/React 官方文档"，要呈现 H 工业风需要**大量 CSS 覆盖**
-- ❌ 首页基本要完全脱离 Starlight 模板自己做（Starlight 允许但配置繁琐）
-- ❌ Starlight 内置的字体/色板系统我们大概率不用
+**采用 B' 混合方案：Astro + Starlight（教程页） + 纯自定义 Astro 页（首页 / 迁移落地 / 营销页）**。
 
-### 选项 B：Astro vanilla + MDX + 手写布局（**推荐**）
-- ✅ 视觉上 100% 按 H 方向定制，无包袱
-- ✅ MDX 处理教程正文足够（代码块用 Shiki、图标用 iconify-json）
-- ✅ i18n 用 `astro-i18n` 轻量路由
-- ✅ 搜索接 Pagefind（单 script 标签级别集成）
-- ❌ 需要手写左侧目录、prev/next 导航这类文档组件（~2 天工作量）
+用户 2026-04-23 初轮选定 B（Astro vanilla），我在此轮做了一次 2026 市场调研（Fumadocs、Nextra v4、VitePress、Starlight），反转推荐为 B'——理由见 §9.5。若用户坚持 B，保留 B 也完全可行，只是要自己实现 i18n 路由 + TOC + 上下翻页。
 
-### 选项 C：Next.js + nextra 或其他
-- ✅ 生态大
-- ❌ 默认 JS bundle 重，和 H "精简产品目录"的气质不匹配
-- ❌ 对编程新手调试门槛更高
+### 9.1 选项 A：Astro + Starlight（纯 Starlight 模板）
+- ✅ TOC / 上下翻页 / i18n（同类最佳）/ 搜索（Pagefind 内置）/ 暗色 / CWV 满分全开箱
+- ❌ 默认主题偏"Vue/React 文档"观感。要呈现 H 工业风需大量 `--sl-*` CSS 变量覆盖
+- ❌ 首页若完全按 H 风格做，需要脱离 Starlight 模板——配置可行但要理解 `Starlight` 的 page 覆盖机制
+- ⚠️ 这条路要么全套用它的主题（视觉屈服）、要么大范围改（视觉自由但工作量不小）
+
+### 9.2 选项 B：Astro vanilla + MDX（100% 手写）
+- ✅ 视觉 100% 按 H 定制，无任何模板包袱
+- ✅ MDX + Shiki + iconify-json 处理教程正文足够
+- ❌ i18n 要自己接 `astro-i18n`（路由 + 字典），不如 Starlight 稳
+- ❌ 左侧目录 / 上下翻页 / TOC / 搜索全部手写（~2~3 天）
+- ❌ 对编程新手而言，手写文档组件容易踩无数细节坑（滚动指示、锚点跳转、响应式目录等）
+
+### 9.3 选项 B'（**推荐**）：Astro + Starlight（教程页）+ 自定义 Astro 页（营销页）
+- ✅ **教程页走 Starlight**：Day 01-07 + Bonus 用 Starlight 的 docs page，自动拿到 TOC/翻页/i18n/Pagefind 搜索
+- ✅ **营销页完全自定义**：`/` 首页、`/migrate/` 迁移落地页、`/7-days/` 目录页用纯 Astro 页面脱离 Starlight 模板，100% 呈现 H 工业风
+- ✅ **全局 H 色板注入到 Starlight**：通过 `--sl-color-*` 变量覆盖，Starlight 教程页也能呈现沙米/墨/橙的 H 配色
+- ✅ **i18n 不用自己搭**：Starlight 的 i18n 同类最佳（locale 检测、UI 翻译系统、路由）
+- ⚠️ 成本：多花半天理解 Starlight 的 slot / override 机制，但**比从零写 i18n + TOC + 翻页省 1-2 天**
+- 📊 对比 B：整体工作量更少，稳定性更高，代价是学习曲线稍陡
+
+### 9.4 选项 C：Fumadocs / Nextra v4（Next.js 系）
+- ✅ Fumadocs 是 2025-2026 增速最快的文档框架（3x YoY），headless 组件易定制
+- ✅ 视觉自由度高
+- ❌ Next.js ecosystem 本身对编程新手太重（比 Astro 多一层心智负担）
+- ❌ Core Web Vitals 略逊于 Astro/Starlight（纯内容场景 Astro 是冠军）
 - **不推荐**
 
-**推荐 B**。理由：我们的视觉方向本身就是"反文档主题默认"，用 Starlight 反而要和它的 CSS 系统搏斗。vanilla Astro 多花的 2 天工作量，换来的是不被模板绑架的自由度。
+### 9.5 选项 D：VitePress（Vue 系）
+- ✅ 极简，上手最快
+- ❌ Vue 生态，视觉改主题的模式和 Starlight 类似（同样有模板包袱）
+- ❌ i18n 不如 Starlight
+- **不推荐**
 
-**待用户拍板**。
+### 9.6 为什么反转推荐
+
+我 2026-04-23 初轮给 B，基于"H 视觉方向反文档主题默认"。调研后发现：
+- Starlight 0.30+ 支持 `components` slot 全局替换任意组件，CSS 变量超过 60 个覆盖点
+- 真正"反默认"的压力在营销页（首页 / hero），不在教程页。教程页的 "list + TOC + prev/next" 布局本身就是 H 风格可接受的形态，只要配色和字体对齐
+- Starlight 解决 i18n 是硬价值——我们是硬要求双语可切换的站，自己写 i18n 极容易出锚点/路由 bug
+
+**B' 本质是 "用框架解决硬问题（i18n / 搜索 / 翻页），把创意精力放在营销页视觉"**——这是成熟团队的做法。
+
+---
+
+## 9.7 部署
+
+- **Cloudflare Pages**（推荐，和竞品同栈、国内外 CDN 都快、免费、与域名 `hermesagentguide.online` 直接绑定）
+- Vercel（备选）
+- 自建：不推荐
+
+## 9.8 关键依赖候选
+
+| 功能 | 选型 |
+|---|---|
+| 文档框架 | Astro + Starlight（教程页） |
+| 首页框架 | 纯 Astro 页面（不走 Starlight 模板） |
+| 内容格式 | MDX |
+| 代码高亮 | Shiki（Astro / Starlight 原生） |
+| 搜索 | Pagefind（Starlight 内置） |
+| 图标 | iconify-json（按需） |
+| Analytics | Cloudflare Web Analytics（无 cookie） |
+| 字体 | Google Fonts self-host（Bricolage Grotesque / IBM Plex Mono / IBM Plex Sans / Noto Sans SC） |
+| 部署 | Cloudflare Pages + `hermesagentguide.online` |
 
 ### 9.1 部署
 
@@ -231,11 +280,11 @@
 
 以下需用户拍板后在实施阶段填入：
 
-- **站点品牌名**：不叫 hermes101。候选方向：`hermes.zh` / `agent.study` / `hermes-zh.dev` / 其他
-- **域名**：待定
-- **英文内容 v1 是否同步交付**：全量 / 中文先行英文 coming soon
+- ~~站点品牌名~~：✅ 已定 —— logo 用 `Hermes/Agent`，域名 `hermesagentguide.online`
+- ~~域名~~：✅ 已定 —— `hermesagentguide.online`
+- ~~技术栈~~：✅ 已定（待用户对 B → B' 的反转建议表态）—— 倾向 B'（Astro + Starlight 混合）
+- **英文内容 v1 是否同步交付**：全量 / 中文先行英文 coming soon —— 建议"中文先行 + 英文骨架 coming soon 页"
 - **作者署名策略**：匿名 / 作者名 / GitHub 账号
-- **技术栈**：A vs B vs C（§9）
 
 ---
 
