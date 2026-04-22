@@ -1,0 +1,87 @@
+---
+import MarketingLayout from '@layouts/MarketingLayout.astro';
+import SectionHead from '@components/SectionHead.astro';
+import CompatChart from '@components/CompatChart.astro';
+import MarqueeDivider from '@components/MarqueeDivider.astro';
+
+const locale = 'en' as const;
+
+const compatPairs = [
+	{ from: 'Skills', fromMeta: '/skills/*', to: 'Skills System', toMeta: 'hub-installable' },
+	{ from: 'Integrations', fromMeta: '50+ services', to: 'Toolsets + MCP', toMeta: 'composable' },
+	{ from: 'Heartbeats', fromMeta: 'cron-like', to: 'Scheduled Tasks', toMeta: 'natural-lang' },
+	{ from: 'Persistent Memory', fromMeta: '24/7 ctx', to: 'Memory System', toMeta: 'auto-compact' },
+	{ from: 'Bot Framework', fromMeta: 'multi-channel', to: 'Messaging Platforms', toMeta: 'plugin-based' },
+];
+---
+
+<MarketingLayout locale={locale} title="Leaving OpenClaw · Migrate to Hermes Agent" description="A tested crosswalk from OpenClaw to Hermes Agent concepts.">
+	<section class="intro">
+		<div class="intro-inner">
+			<div class="big">H/01.08</div>
+			<h1>Leaving OpenClaw,<br />moving to Hermes Agent</h1>
+			<p class="sub">Both tools share DNA — concepts map 1:1. Below is the author's tested crosswalk.</p>
+			<a href="/en/7-days/day-01/" class="btn btn-primary">◉ No Hermes yet? Start at Day 01</a>
+		</div>
+	</section>
+
+	<MarqueeDivider />
+
+	<section class="sheet">
+		<SectionHead num="A.02" title="Compatibility Sheet" en="兼容性对照表" desc="Based on OpenClaw 2026-Q1 and Hermes Agent v0.4 docs. Tested by the author in 2026-04." />
+		<CompatChart pairs={compatPairs} fromLabel="[ FROM ]" toLabel="[ TO · HERMES ]" fromTitle="OpenClaw" toTitle="Hermes Agent" />
+	</section>
+
+	<section class="stub">
+		<SectionHead num="A.03" title="Full Walkthrough" en="STEP-BY-STEP" />
+		<p class="coming">📦 Full migration walkthrough is in progress. Contributions welcome on <a href="https://github.com/Hubery23">GitHub</a>.</p>
+	</section>
+</MarketingLayout>
+
+<style>
+	.intro { padding: 80px 32px; background: var(--sand); border-bottom: 1px solid var(--ink); }
+	.intro-inner { max-width: 720px; }
+	.big {
+		font-family: var(--font-display);
+		font-size: 120px;
+		font-weight: 800;
+		color: var(--tang);
+		line-height: 0.85;
+		letter-spacing: -5px;
+		margin-bottom: 18px;
+	}
+	h1 {
+		font-family: var(--font-display);
+		font-size: 54px;
+		font-weight: 700;
+		letter-spacing: -1.5px;
+		line-height: 1.05;
+		margin: 0 0 18px;
+	}
+	.sub {
+		font-family: var(--font-display);
+		font-size: 20px;
+		line-height: 1.35;
+		max-width: 560px;
+		margin-bottom: 28px;
+	}
+	.btn {
+		font-family: var(--font-mono);
+		font-size: 12px;
+		letter-spacing: 2.5px;
+		font-weight: 700;
+		text-transform: uppercase;
+		padding: 14px 22px;
+		display: inline-flex;
+		text-decoration: none;
+	}
+	.btn-primary { background: var(--tang); color: var(--ink); }
+	.sheet, .stub { padding: 80px 32px; border-bottom: 1px solid var(--ink); }
+	.stub { background: var(--paper); }
+	.coming { font-family: var(--font-mono); font-size: 14px; letter-spacing: 1px; color: var(--ink-soft); }
+	.coming a { color: var(--tang); }
+	@media (max-width: 760px) {
+		.big { font-size: 72px; }
+		h1 { font-size: 32px; }
+	}
+</style>

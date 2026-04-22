@@ -1,0 +1,66 @@
+---
+import MarketingLayout from '@layouts/MarketingLayout.astro';
+import SectionHead from '@components/SectionHead.astro';
+import DayCard from '@components/DayCard.astro';
+import MarqueeDivider from '@components/MarqueeDivider.astro';
+
+const locale = 'zh-CN' as const;
+const days = [
+	{ num: 'H/01.01', day: 'DAY 01', titleZh: '跑起来：Hermes 的第一次对话', titleEn: 'Boot Up', desc: '装好本体，完成第一次对话。', href: '/7-days/day-01/' },
+	{ num: 'H/01.02', day: 'DAY 02', titleZh: '挑个大脑：模型选型与 API 接入', titleEn: 'Pick a Brain', desc: '配 LLM，让 Agent 会答话。', href: '/7-days/day-02/' },
+	{ num: 'H/01.03', day: 'DAY 03', titleZh: '入驻聊天室：Telegram / Discord / Slack', titleEn: 'Go Social', desc: 'Bot token + .env。', href: '/7-days/day-03/' },
+	{ num: 'H/01.04', day: 'DAY 04', titleZh: '让 Agent 动手：内置工具实战', titleEn: 'Give It Hands', desc: '触发 ≥2 个工具。', href: '/7-days/day-04/' },
+	{ num: 'H/01.05', day: 'DAY 05', titleZh: '教它新本事：安装第一个 Skill', titleEn: 'Teach a Trick', desc: '装 skill 并触发。', milestone: true, href: '/7-days/day-05/' },
+	{ num: 'H/01.06', day: 'DAY 06', titleZh: '记忆与状态：会话、压缩、备份', titleEn: 'Memory & State', desc: '跨会话记忆。', href: '/7-days/day-06/' },
+	{ num: 'H/01.07', day: 'DAY 07', titleZh: '全自动化：定时任务与故障排查', titleEn: 'Full Auto', desc: '调度 + 排错。', href: '/7-days/day-07/' },
+	{ num: 'H/01.08', day: 'BONUS', titleZh: '从 OpenClaw 搬家：平滑迁移指南', titleEn: 'Leaving OpenClaw', desc: '映射表 + 亲测。', href: '/migrate/' },
+];
+---
+
+<MarketingLayout locale={locale} title="七日入门 · Hermes Agent 中文指南" description="每天一个模块，一小时内完成。">
+	<section class="intro">
+		<div class="big">H/01</div>
+		<h1>七日组装指南</h1>
+		<p class="sub">每天一个模块，一小时内完成。全部命令亲测可复现，Mac / Linux / WSL 都跑得起来。</p>
+	</section>
+
+	<MarqueeDivider />
+
+	<section class="grid-section">
+		<SectionHead num="INDEX" title="全部章节" en="ALL CHAPTERS" desc="点击任意卡片开始。" />
+		<div class="day-grid">
+			{days.map((d) => <DayCard {...d} />)}
+		</div>
+	</section>
+</MarketingLayout>
+
+<style>
+	.intro { padding: 80px 32px; background: var(--sand); border-bottom: 1px solid var(--ink); }
+	.big {
+		font-family: var(--font-display);
+		font-size: 120px;
+		font-weight: 800;
+		color: var(--tang);
+		line-height: 0.85;
+		letter-spacing: -5px;
+		margin-bottom: 18px;
+	}
+	h1 {
+		font-family: var(--font-display);
+		font-size: 54px;
+		font-weight: 700;
+		letter-spacing: -1.5px;
+		line-height: 1.05;
+		margin: 0 0 18px;
+	}
+	.sub { font-family: var(--font-display); font-size: 20px; line-height: 1.35; max-width: 620px; }
+	.grid-section { padding: 80px 32px; }
+	.day-grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 1px;
+		background: var(--ink);
+		border: 1px solid var(--ink);
+	}
+	@media (max-width: 980px) { .day-grid { grid-template-columns: repeat(2, 1fr); } }
+</style>

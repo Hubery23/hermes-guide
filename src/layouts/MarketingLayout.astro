@@ -1,0 +1,49 @@
+---
+import type { Locale } from '@lib/locale';
+import WarningStrip from '@components/WarningStrip.astro';
+import SiteNav from '@components/SiteNav.astro';
+import SiteFooter from '@components/SiteFooter.astro';
+import '@styles/fonts.css';
+import '@styles/theme.css';
+
+interface Props {
+	locale: Locale;
+	title: string;
+	description?: string;
+}
+const { locale, title, description } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang={locale}>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>{title}</title>
+		{description && <meta name="description" content={description} />}
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<link rel="canonical" href={`https://hermesagentguide.online${Astro.url.pathname}`} />
+	</head>
+	<body>
+		<WarningStrip locale={locale} pathname={Astro.url.pathname} />
+		<SiteNav locale={locale} />
+		<main>
+			<slot />
+		</main>
+		<SiteFooter locale={locale} />
+	</body>
+</html>
+
+<style is:global>
+	* { box-sizing: border-box; }
+	html, body { margin: 0; padding: 0; }
+	body {
+		background: var(--sand);
+		color: var(--ink);
+		font-family: var(--font-body);
+		line-height: 1.5;
+		-webkit-font-smoothing: antialiased;
+	}
+	main { min-height: 60vh; }
+	a { color: inherit; }
+</style>

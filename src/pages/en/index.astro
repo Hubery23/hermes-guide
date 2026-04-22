@@ -1,0 +1,208 @@
+---
+import MarketingLayout from '@layouts/MarketingLayout.astro';
+import MarqueeDivider from '@components/MarqueeDivider.astro';
+import SectionHead from '@components/SectionHead.astro';
+import SpecCard from '@components/SpecCard.astro';
+import DayCard from '@components/DayCard.astro';
+import CompatChart from '@components/CompatChart.astro';
+import { useT } from '@lib/i18n';
+
+const locale = 'en' as const;
+const t = useT(locale);
+
+const days = [
+	{ num: 'H/01.01', day: 'DAY 01', titleZh: '跑起来：Hermes 的第一次对话', titleEn: 'Boot Up: Your First Chat', desc: 'Install, set env vars, complete your first chat.', href: '/en/7-days/day-01/' },
+	{ num: 'H/01.02', day: 'DAY 02', titleZh: '挑个大脑：模型选型与 API 接入', titleEn: 'Pick a Brain: Model & API', desc: 'Choose Claude / GPT / local; configure API keys.', href: '/en/7-days/day-02/' },
+	{ num: 'H/01.03', day: 'DAY 03', titleZh: '入驻聊天室：Telegram / Discord / Slack', titleEn: 'Go Social', desc: 'Get a bot token, .env, chat with Hermes.', href: '/en/7-days/day-03/' },
+	{ num: 'H/01.04', day: 'DAY 04', titleZh: '让 Agent 动手：内置工具实战', titleEn: 'Give It Hands', desc: 'Invoke at least 2 built-in tools with real effects.', href: '/en/7-days/day-04/' },
+	{ num: 'H/01.05', day: 'DAY 05', titleZh: '教它新本事：安装第一个 Skill', titleEn: 'Teach a Trick', desc: 'Install a skill from the hub and trigger it by chat.', milestone: true, href: '/en/7-days/day-05/' },
+	{ num: 'H/01.06', day: 'DAY 06', titleZh: '记忆与状态：会话、压缩、备份', titleEn: 'Memory & State', desc: 'Make Hermes remember what you said yesterday.', href: '/en/7-days/day-06/' },
+	{ num: 'H/01.07', day: 'DAY 07', titleZh: '全自动化：定时任务与故障排查', titleEn: 'Full Auto', desc: 'Natural-language cron; pinpoint typical errors.', href: '/en/7-days/day-07/' },
+	{ num: 'H/01.08', day: 'BONUS', titleZh: '从 OpenClaw 搬家：平滑迁移指南', titleEn: 'Leaving OpenClaw', desc: 'Tested crosswalk for skills and memory.', href: '/en/migrate/' },
+];
+
+const compatPairs = [
+	{ from: 'Skills', fromMeta: '/skills/*', to: 'Skills System', toMeta: 'hub-installable' },
+	{ from: 'Integrations', fromMeta: '50+ services', to: 'Toolsets + MCP', toMeta: 'composable' },
+	{ from: 'Heartbeats', fromMeta: 'cron-like', to: 'Scheduled Tasks', toMeta: 'natural-lang' },
+	{ from: 'Persistent Memory', fromMeta: '24/7 ctx', to: 'Memory System', toMeta: 'auto-compact' },
+	{ from: 'Bot Framework', fromMeta: 'multi-channel', to: 'Messaging Platforms', toMeta: 'plugin-based' },
+];
+---
+
+<MarketingLayout locale={locale} title={`Hermes Agent Guide · ${t('site.tagline')}`} description={t('hero.sub')}>
+	<section class="hero">
+		<div class="hero-l">
+			<div class="hero-id">
+				<div class="big">H/01</div>
+				<div class="meta">
+					<span class="tag">{t('hero.tag')}</span>
+					<h1>{t('hero.title.line1')}<br />{t('hero.title.line2')}</h1>
+				</div>
+			</div>
+			<p class="hero-sub">{t('hero.sub')}</p>
+			<div class="hero-cta">
+				<a href="/en/7-days/day-01/" class="btn btn-primary">◉ {t('hero.cta.primary')}</a>
+				<a href="/en/7-days/" class="btn btn-ghost">▤ {t('hero.cta.ghost')}</a>
+			</div>
+			<div class="hero-stats">
+				<div class="stat"><b>{t('hero.stats.days')}</b><span>{t('hero.stats.days.desc')}</span></div>
+				<div class="stat"><b>{t('hero.stats.chapters')}</b><span>{t('hero.stats.chapters.desc')}</span></div>
+				<div class="stat"><b>{t('hero.stats.oss')}</b><span>{t('hero.stats.oss.desc')}</span></div>
+			</div>
+		</div>
+		<div class="hero-r">
+			<SpecCard locale={locale} />
+		</div>
+	</section>
+
+	<MarqueeDivider />
+
+	<section class="days" id="days">
+		<SectionHead num={t('days.section.num')} title={t('days.section.title')} en={t('days.section.en')} desc={t('days.section.desc')} />
+		<div class="day-grid">
+			{days.map((d) => <DayCard {...d} />)}
+		</div>
+	</section>
+
+	<section class="migration">
+		<SectionHead num={t('migrate.section.num')} title={t('migrate.section.title')} en={t('migrate.section.en')} desc={t('migrate.section.desc')} />
+		<CompatChart pairs={compatPairs} fromLabel="[ FROM ]" toLabel="[ TO · HERMES ]" fromTitle="OpenClaw" toTitle="Hermes Agent" />
+	</section>
+
+	<section class="final">
+		<h2>{t('final.title.line1')}<br />{t('final.title.line2')} <span>{t('final.title.line2.em')}</span>.</h2>
+		<p>{t('final.desc')}</p>
+		<a href="/en/7-days/day-01/" class="btn btn-primary">◉ {t('final.cta')}</a>
+	</section>
+</MarketingLayout>
+
+<style>
+	.hero {
+		padding: 80px 32px 60px;
+		display: grid;
+		grid-template-columns: 1.1fr 1fr;
+		gap: 60px;
+		border-bottom: 1px solid var(--ink);
+		position: relative;
+		overflow: hidden;
+	}
+	.hero::before {
+		content: 'HERMES';
+		position: absolute;
+		bottom: -48px;
+		right: -20px;
+		font-family: var(--font-display);
+		font-weight: 800;
+		font-size: 320px;
+		color: var(--sand-dark);
+		letter-spacing: -10px;
+		pointer-events: none;
+		line-height: 0.8;
+		z-index: 0;
+	}
+	.hero-l, .hero-r { position: relative; z-index: 1; }
+	.hero-id { display: flex; align-items: baseline; gap: 22px; margin-bottom: 28px; }
+	.hero-id .big {
+		font-family: var(--font-display);
+		font-size: 140px;
+		font-weight: 800;
+		color: var(--tang);
+		line-height: 0.85;
+		letter-spacing: -6px;
+	}
+	.hero-id .meta { padding-top: 14px; }
+	.hero-id .tag {
+		display: inline-block;
+		background: var(--ink);
+		color: var(--amber);
+		padding: 3px 8px;
+		font-family: var(--font-mono);
+		font-size: 10px;
+		letter-spacing: 2px;
+		font-weight: 700;
+		margin-bottom: 8px;
+	}
+	.hero-id h1 {
+		font-family: var(--font-display);
+		font-size: 36px;
+		font-weight: 700;
+		letter-spacing: -1px;
+		line-height: 1.05;
+		margin: 0;
+	}
+	.hero-sub {
+		font-family: var(--font-display);
+		font-size: 22px;
+		font-weight: 500;
+		line-height: 1.3;
+		max-width: 540px;
+		margin-bottom: 24px;
+	}
+	.hero-cta { display: flex; gap: 8px; margin-bottom: 36px; flex-wrap: wrap; }
+	.btn {
+		font-family: var(--font-mono);
+		font-size: 12px;
+		letter-spacing: 2.5px;
+		font-weight: 700;
+		text-transform: uppercase;
+		padding: 14px 22px;
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		text-decoration: none;
+	}
+	.btn-primary { background: var(--tang); color: var(--ink); }
+	.btn-ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--ink); }
+	.hero-stats { display: flex; gap: 40px; flex-wrap: wrap; }
+	.stat b {
+		font-family: var(--font-display);
+		font-size: 28px;
+		font-weight: 700;
+		letter-spacing: -0.5px;
+		display: block;
+	}
+	.stat span {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		letter-spacing: 2px;
+		text-transform: uppercase;
+		color: var(--ink-soft);
+	}
+	.days, .migration { padding: 80px 32px; border-bottom: 1px solid var(--ink); }
+	.migration { background: var(--paper); }
+	.day-grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 1px;
+		background: var(--ink);
+		border: 1px solid var(--ink);
+	}
+	.final {
+		padding: 100px 32px;
+		text-align: center;
+		background: var(--ink);
+		color: var(--sand);
+		position: relative;
+		overflow: hidden;
+	}
+	.final h2 {
+		font-family: var(--font-display);
+		font-size: 80px;
+		font-weight: 800;
+		letter-spacing: -3px;
+		line-height: 0.95;
+		margin-bottom: 16px;
+	}
+	.final h2 span { color: var(--amber); }
+	.final p { font-size: 16px; color: #aaa; max-width: 520px; margin: 0 auto 32px; }
+	.final .btn-primary { padding: 18px 32px; font-size: 13px; letter-spacing: 3px; }
+
+	@media (max-width: 980px) {
+		.hero { grid-template-columns: 1fr; padding: 48px 20px; }
+		.hero-id .big { font-size: 96px; }
+		.hero::before { font-size: 180px; bottom: -20px; }
+		.day-grid { grid-template-columns: repeat(2, 1fr); }
+		.final h2 { font-size: 42px; }
+	}
+</style>
