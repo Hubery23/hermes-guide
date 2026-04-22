@@ -6,7 +6,9 @@
 
 **Architecture:** Astro 5 + Starlight（教程页）+ 纯自定义 Astro 页（首页 / 迁移落地 / 7 天索引）。Starlight 处理 i18n 路由、TOC、上下翻页、Pagefind 搜索；自定义页走 H 工业风完全绕开 Starlight 模板。H 配色通过 Starlight CSS 变量（`--sl-color-*`）全局覆盖，自定义页直接用 `src/styles/theme.css` 的 `--sand / --ink / --tang / --amber` tokens。
 
-**Tech Stack:** Astro 5 · Starlight · MDX · TypeScript · Pagefind · Fontsource (self-host 字体) · npm · Cloudflare Pages (Git-based autodeploy)
+**Tech Stack:** Astro 5 · Starlight · MDX · TypeScript · Pagefind · Fontsource (self-host 字体) · **pnpm** · Cloudflare Pages (Git-based autodeploy)
+
+**明确不使用的库**（MVP 范围内不加任何组件/表单/图标/UI 库）：shadcn/ui、Radix、Mantine、Headless UI、Tailwind、UnoCSS、Lucide、Heroicons、Iconify、react-hook-form、Formik、Framer Motion、GSAP。理由：H 风格是高度定制美学，无复杂交互件；Unicode 几何符号（● ◉ ▲ ◆）承担视觉标识职能；Starlight 已提供搜索（Pagefind）、代码高亮（Shiki）、社交图标、TOC 等基建。v2 如果真出现需要复杂交互/品牌图标/可视化图表再加。
 
 **Spec reference:** `docs/superpowers/specs/2026-04-23-hermes-guide-design.md`（commit `1f4e318`）
 
@@ -113,20 +115,24 @@
 20
 ```
 
-- [ ] **Step 2: 初始化 package.json（使用 npm）**
-
-在仓库根目录运行：
+- [ ] **Step 2: 启用 corepack 并初始化 package.json（使用 pnpm）**
 
 ```bash
+# 启用 corepack 让 pnpm 通过 Node 自带机制管理（避免全局 install）
+corepack enable
+corepack prepare pnpm@9 --activate
+
 cd /Users/hubery/MyProduct/hermes
-npm init -y
+pnpm init
 ```
 
-然后把 `package.json` 的 `name` 改为 `hermes-agent-guide`，`version` 设为 `0.1.0`，并新增：
+然后把 `package.json` 的 `name` 改为 `hermes-agent-guide`、`version` 设为 `0.1.0`，并新增字段：
 
 ```json
 {
   "type": "module",
+  "packageManager": "pnpm@9.15.0",
+  "engines": { "node": ">=20" },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
@@ -138,6 +144,8 @@ npm init -y
 }
 ```
 
+**Why `packageManager` 字段**：Corepack 会据此自动拉取对应 pnpm 版本，换机器不用手装。
+
 - [ ] **Step 3: 扩充 .gitignore**
 
 在已有 `.gitignore` 尾部追加：
@@ -148,6 +156,7 @@ dist/
 .astro/
 .vercel/
 .wrangler/
+.pnpm-store/
 *.log
 .env
 .env.local
@@ -166,7 +175,7 @@ node --version
 
 ```bash
 git add .nvmrc package.json .gitignore
-git commit -m "chore: 初始化 Node/npm 项目脚手架"
+git commit -m "chore: 初始化 Node/pnpm 项目脚手架"
 ```
 
 ---
@@ -174,32 +183,32 @@ git commit -m "chore: 初始化 Node/npm 项目脚手架"
 ### Task 0.2: 安装 Astro + Starlight + MDX
 
 **Files:**
-- Modify: `package.json`（自动，由 npm install 维护）
-- Create: `package-lock.json`（自动）
+- Modify: `package.json`（自动，由 pnpm add 维护）
+- Create: `pnpm-lock.yaml`（自动）
 
 - [ ] **Step 1: 安装核心依赖**
 
 ```bash
-npm install astro @astrojs/starlight @astrojs/mdx @astrojs/check typescript
+pnpm add astro @astrojs/starlight @astrojs/mdx @astrojs/check typescript
 ```
 
 - [ ] **Step 2: 安装开发依赖（测试）**
 
 ```bash
-npm install -D vitest @vitest/ui playwright @playwright/test
-npx playwright install chromium
+pnpm add -D vitest @vitest/ui playwright @playwright/test
+pnpm exec playwright install chromium
 ```
 
 - [ ] **Step 3: 安装字体（self-hosted 避免 CN 访问 Google Fonts 不稳）**
 
 ```bash
-npm install @fontsource-variable/bricolage-grotesque @fontsource/ibm-plex-mono @fontsource/ibm-plex-sans @fontsource/noto-sans-sc
+pnpm add @fontsource-variable/bricolage-grotesque @fontsource/ibm-plex-mono @fontsource/ibm-plex-sans @fontsource/noto-sans-sc
 ```
 
 - [ ] **Step 4: 验证 Astro CLI 可调用**
 
 ```bash
-npx astro --version
+pnpm exec astro --version
 ```
 
 期望：输出 `5.x.x`
@@ -207,7 +216,7 @@ npx astro --version
 - [ ] **Step 5: Commit**
 
 ```bash
-git add package.json package-lock.json
+git add package.json pnpm-lock.yaml
 git commit -m "chore: 安装 Astro/Starlight/MDX/字体/测试依赖"
 ```
 
@@ -303,7 +312,7 @@ export default defineConfig({
 - [ ] **Step 2: 验证配置被解析**
 
 ```bash
-npx astro check
+pnpm astro check
 ```
 
 期望：无错误（可能有警告表示还没有 content，是正常的）
@@ -701,7 +710,7 @@ describe('stripLocale', () => {
 - [ ] **Step 3: 运行测试验证失败**
 
 ```bash
-npx vitest run src/tests/unit/locale.test.ts
+pnpm vitest run src/tests/unit/locale.test.ts
 ```
 
 期望：全部 FAIL（模块不存在）
@@ -739,7 +748,7 @@ export function swapLocalePath(pathname: string, target: Locale): string {
 - [ ] **Step 5: 验证 locale 测试通过**
 
 ```bash
-npx vitest run src/tests/unit/locale.test.ts
+pnpm vitest run src/tests/unit/locale.test.ts
 ```
 
 期望：PASS 全部
@@ -773,7 +782,7 @@ describe('createTranslator', () => {
 - [ ] **Step 7: 运行测试验证失败**
 
 ```bash
-npx vitest run src/tests/unit/i18n.test.ts
+pnpm vitest run src/tests/unit/i18n.test.ts
 ```
 
 期望：FAIL
@@ -810,7 +819,7 @@ export function useT(locale: Locale) {
 - [ ] **Step 9: 验证 i18n 测试通过**
 
 ```bash
-npx vitest run src/tests/unit/i18n.test.ts
+pnpm vitest run src/tests/unit/i18n.test.ts
 ```
 
 期望：PASS 全部
@@ -940,7 +949,7 @@ const enHref = swapLocalePath(pathname, 'en');
 - [ ] **Step 2: 构建验证编译过**
 
 ```bash
-npx astro check
+pnpm astro check
 ```
 
 期望：无 error（可能有 warning 关于未使用的 component，正常）
@@ -1393,7 +1402,7 @@ const { pairs, fromLabel, toLabel, fromTitle, toTitle } = Astro.props;
 - [ ] **Step 6: 构建验证**
 
 ```bash
-npx astro check
+pnpm astro check
 ```
 
 期望：无 error
@@ -1664,7 +1673,7 @@ const compatPairs = [
 - [ ] **Step 2: 启动 dev server 并手动验证**
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 浏览器打开 `http://localhost:4321/`。期望：看到完整的 H 风格首页，hero / 7 天卡片 / 迁移对照 / final CTA / footer 都在。
@@ -1812,7 +1821,7 @@ const compatPairs = [
 - [ ] **Step 2: 验证英文首页能跑**
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 访问 `http://localhost:4321/en/`，验证：(1) 文案切换为英文，(2) 所有内部链接带 `/en/` 前缀，(3) 语言切换器高亮 EN。
@@ -1957,7 +1966,7 @@ const compatPairs = [
 - [ ] **Step 3: 验证两个迁移页**
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 访问 `/migrate/` 和 `/en/migrate/`，确认两页都渲染。
@@ -2031,7 +2040,7 @@ const days = [
 - [ ] **Step 3: 验证**
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 访问 `/7-days/` 和 `/en/7-days/`。
@@ -2208,7 +2217,7 @@ export default defineConfig({
     trace: 'retain-on-failure'
   },
   webServer: {
-    command: 'npm run dev',
+    command: 'pnpm dev',
     url: 'http://localhost:4321',
     reuseExistingServer: !process.env.CI,
     timeout: 60_000
@@ -2268,7 +2277,7 @@ test('7-days index lists all 8 chapters', async ({ page }) => {
 - [ ] **Step 2: 运行测试（dev server 会被 Playwright 自动拉起）**
 
 ```bash
-npm run test:e2e
+pnpm test:e2e
 ```
 
 期望：全部 PASS
@@ -2321,7 +2330,7 @@ test('lang switcher preserves path en→zh', async ({ page }) => {
 - [ ] **Step 2: 运行**
 
 ```bash
-npm run test:e2e src/tests/e2e/i18n-switch.spec.ts
+pnpm test:e2e src/tests/e2e/i18n-switch.spec.ts
 ```
 
 期望：全部 PASS
@@ -2371,7 +2380,7 @@ test('all en mirror links resolve', async ({ request }) => {
 - [ ] **Step 2: 运行**
 
 ```bash
-npm run test:e2e src/tests/e2e/links.spec.ts
+pnpm test:e2e src/tests/e2e/links.spec.ts
 ```
 
 期望：18 次 200（9 个中文 + 9 个英文镜像）
@@ -2392,7 +2401,7 @@ git commit -m "test: 所有首页外链（含 /en/ 镜像）均返回 200"
 - [ ] **Step 1: 运行 build**
 
 ```bash
-npm run build
+pnpm build
 ```
 
 期望：
@@ -2403,7 +2412,7 @@ npm run build
 - [ ] **Step 2: 预览 build 产物**
 
 ```bash
-npm run preview
+pnpm preview
 ```
 
 访问 `http://localhost:4321/`，人肉再过一轮关键路径：首页 → Day 01 → 迁移页 → 切英文 → 返回。
@@ -2411,8 +2420,8 @@ npm run preview
 - [ ] **Step 3: 运行完整测试套件**
 
 ```bash
-npm test
-npm run test:e2e
+pnpm test
+pnpm test:e2e
 ```
 
 期望：全部 PASS
@@ -2445,7 +2454,7 @@ pages_build_output_dir = "./dist"
 2. 选仓库 `Hubery23/hermes-agent-guide`（推送后）
 3. 构建配置：
    - Framework preset: **Astro**
-   - Build command: `npm run build`
+   - Build command: `pnpm build`
    - Build output directory: `dist`
    - Node version: `20`
 4. Environment variables：暂无
@@ -2540,11 +2549,11 @@ git commit --allow-empty -m "chore: MVP 首次部署到 hermesagentguide.online"
 ## 本地开发
 
 ```bash
-npm install
-npm run dev       # http://localhost:4321
-npm run build     # 生产构建
-npm test          # 单元测试
-npm run test:e2e  # E2E 测试
+pnpm install
+pnpm dev          # http://localhost:4321
+pnpm build        # 生产构建
+pnpm test         # 单元测试
+pnpm test:e2e     # E2E 测试
 ```
 
 ## 贡献
