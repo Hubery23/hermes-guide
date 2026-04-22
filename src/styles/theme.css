@@ -1,1 +1,81 @@
-/* Stub — H industrial theme tokens added in a later task */
+/* src/styles/theme.css — H 工业产品目录主题
+ * 承担两件事：
+ *   1. 定义 H 设计 token（色板）给营销页组件用
+ *   2. 覆盖 Starlight 的 CSS 变量，让教程页也呈 H 风
+ */
+
+/* ===== 1. H 设计 tokens ===== */
+:root {
+	--sand: #e8e2d4;
+	--sand-dark: #d9d2bf;
+	--paper: #f4efe1;
+	--ink: #2b2b2e;
+	--ink-soft: #44444a;
+	--tang: #f5713a;
+	--amber: #e8c547;
+}
+
+/* ===== 2. Starlight 变量覆盖（浅色模式） ===== */
+:root,
+[data-theme='light'] {
+	--sl-color-bg: var(--sand);
+	--sl-color-bg-nav: var(--sand);
+	--sl-color-bg-sidebar: var(--paper);
+	--sl-color-text: var(--ink);
+	--sl-color-text-accent: var(--tang);
+	--sl-color-accent: var(--tang);
+	--sl-color-accent-high: var(--ink);
+	--sl-color-accent-low: var(--amber);
+
+	--sl-color-white: var(--paper);
+	--sl-color-gray-1: var(--ink-soft);
+	--sl-color-gray-2: var(--ink-soft);
+	--sl-color-gray-5: var(--sand-dark);
+	--sl-color-gray-6: var(--paper);
+	--sl-color-hairline: var(--ink);
+	--sl-color-hairline-light: var(--sand-dark);
+
+	--sl-font: var(--font-body);
+	--sl-font-system-mono: var(--font-mono);
+}
+
+/* 深色模式：暂不做独立 H 深色方案，回落到深墨底 */
+[data-theme='dark'] {
+	--sl-color-bg: var(--ink);
+	--sl-color-bg-sidebar: #1a1a1e;
+	--sl-color-text: var(--sand);
+	--sl-color-text-accent: var(--amber);
+	--sl-color-accent: var(--amber);
+}
+
+/* ===== 3. 全局基础样式 ===== */
+body {
+	font-family: var(--font-body);
+	background: var(--sl-color-bg);
+	color: var(--sl-color-text);
+}
+
+h1,
+h2,
+h3,
+h4 {
+	font-family: var(--font-display);
+	letter-spacing: -0.02em;
+}
+
+code,
+pre,
+.mono {
+	font-family: var(--font-mono);
+}
+
+/* Starlight 侧边栏 active 态用 tangerine 高亮 */
+.sidebar-content a[aria-current='page'] {
+	background: var(--tang);
+	color: var(--ink) !important;
+}
+
+/* 代码块边框协调 H 色板 */
+.expressive-code {
+	--ec-brdCol: var(--ink);
+}
