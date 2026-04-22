@@ -1,9 +1,13 @@
 # Hermes Agent 中文指南站 · 设计规范
 
 - **日期**：2026-04-23
-- **状态**：spec 草案（待用户复审）
-- **域名**：**hermesagentguide.online**（已拍板）
-- **下一步**：spec 审核通过后，调用 `superpowers:writing-plans` 生成实施计划
+- **状态**：spec 已冻结，进入实施计划阶段
+- **域名**：**hermesagentguide.online**
+- **技术栈**：**B'**（Astro + Starlight 混合 + 自定义营销页）
+- **署名**：GitHub 账号 [@Hubery23](https://github.com/Hubery23)
+- **仓库**：本地 `/Users/hubery/MyProduct/hermes`；未来会作为**公开仓库**推送到 `github.com/Hubery23`，站内所有 "源码"/"贡献"/"报 bug" 链接都指向该公开仓库
+- **首轮发布语言**：中文先行，英文页面作为可路由占位（语言切换器能点但落地页显示 "Coming soon — 欢迎贡献"）
+- **下一步**：调用 `superpowers:writing-plans` 生成实施计划
 
 ---
 
@@ -146,7 +150,7 @@
 5. **A.01 七日组装指南**：8 张方格，Day 04 做 milestone
 6. **A.02 从 OpenClaw 迁移**：左右对照兼容性映射表
 7. **Final CTA**：大字 "现在开始，7 天后上线你的 Agent"
-8. **Footer**：S/N、MIT 声明、非官方社区指南
+8. **Footer**：S/N、MIT 声明、非官方社区指南、**GitHub ↗ 链接指向 `github.com/Hubery23/<repo>`**、"贡献 PR" 指引
 
 **Logo 文字**：暂定 `Hermes/Agent`（左下"Hermes"主名 + 斜杠橙色 + "Agent"）。**站点正式品牌名未定**，见 §10 TBD。
 
@@ -158,17 +162,18 @@
 
 ### 7.1 架构要求
 
-- 所有可见文案（包括 nav、按钮、spec 卡片、footer）从翻译文件读取
-- URL 策略：`/` 默认跳到浏览器语言；`/en/*` 为英文；`/zh/*` 为中文（或 `/` 作中文默认）
+- 所有可见文案（nav、按钮、spec 卡片、footer、所有 H 风格 label）从翻译文件读取
+- URL 策略：`/` 默认 = 中文（`zh-CN`）；`/en/*` = 英文
 - 语言切换按钮保留当前路径，只切换语言段
-- Day 01-07 + Bonus 内容文件按语言分文件，用翻译键映射，不强制同时交付两语——可以"中文先行，英文标 Coming soon"
+- 教程内容按语言分文件；**首轮只交付中文，英文页保留为"Coming soon，欢迎贡献 PR"的占位页**，让语言切换器不至于点了就 404
 
-### 7.2 i18n 选型
+### 7.2 i18n 实现
 
-看选的框架（§9）决定：
-- Astro + Starlight：内置 i18n，配置即用
-- Astro vanilla：`astro-i18n` 或 `@astrolicious/i18n`
-- 自己写：一个 `t()` 函数 + JSON 字典（最轻）
+走 Starlight 内置 i18n：
+- 在 `astro.config.mjs` 里声明 `defaultLocale: 'zh-CN'` 和 `locales: { 'zh-CN': {...}, 'en': {...} }`
+- UI 文案通过 `src/content/i18n/zh-CN.json` / `en.json` 提供
+- 教程 MDX 按语言放在 `src/content/docs/zh-CN/` 和 `src/content/docs/en/`
+- 自定义 Astro 页面（首页、迁移落地页）用 `getLocaleByPath` 等 Starlight utility 取得当前语言，从翻译字典渲染
 
 ---
 
@@ -278,13 +283,14 @@
 
 ## 10. 未决项（TBD）
 
-以下需用户拍板后在实施阶段填入：
+所有 MVP 前置决策均已拍板（见顶部 metadata）。
 
-- ~~站点品牌名~~：✅ 已定 —— logo 用 `Hermes/Agent`，域名 `hermesagentguide.online`
-- ~~域名~~：✅ 已定 —— `hermesagentguide.online`
-- ~~技术栈~~：✅ 已定（待用户对 B → B' 的反转建议表态）—— 倾向 B'（Astro + Starlight 混合）
-- **英文内容 v1 是否同步交付**：全量 / 中文先行英文 coming soon —— 建议"中文先行 + 英文骨架 coming soon 页"
-- **作者署名策略**：匿名 / 作者名 / GitHub 账号
+- ✅ 站点 logo：`Hermes/Agent`
+- ✅ 域名：`hermesagentguide.online`
+- ✅ 技术栈：B'（Astro + Starlight 混合）
+- ✅ 首轮语言：中文先行、英文占位可路由
+- ✅ 署名：GitHub [@Hubery23](https://github.com/Hubery23)
+- ✅ 仓库：未来公开到 `github.com/Hubery23/<repo>`，站内导航 footer 有 "GitHub ↗" 链接
 
 ---
 
