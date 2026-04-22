@@ -1,0 +1,64 @@
+---
+interface Props {
+	num: string;
+	day: string;
+	titleZh: string;
+	titleEn: string;
+	desc: string;
+	milestone?: boolean;
+	href: string;
+}
+const { num, day, titleZh, titleEn, desc, milestone = false, href } = Astro.props;
+---
+<a class:list={['day', { highlight: milestone }]} href={href}>
+	{milestone && <span class="tape">★ MILESTONE</span>}
+	<div class="d-num">{num}</div>
+	<div class="d-title-zh">{titleZh}</div>
+	<div class="d-title-en">{titleEn}</div>
+	<p class="d-desc">{desc}</p>
+	<div class="d-foot">
+		<span>{day}</span>
+		<span class="arrow">→</span>
+	</div>
+</a>
+<style>
+	.day {
+		background: var(--sand); padding: 24px 20px 22px;
+		position: relative; display: flex; flex-direction: column;
+		min-height: 210px; transition: background 0.15s;
+		text-decoration: none; color: var(--ink);
+	}
+	.day:hover { background: var(--paper); }
+	.d-num {
+		font-family: var(--font-mono); font-size: 10px;
+		letter-spacing: 3px; font-weight: 700;
+		color: var(--ink-soft); margin-bottom: 10px;
+	}
+	.d-title-zh {
+		font-family: var(--font-display); font-size: 24px; font-weight: 700;
+		letter-spacing: -0.5px; line-height: 1.1; margin-bottom: 4px;
+	}
+	.d-title-en {
+		font-family: var(--font-mono); font-size: 11px;
+		letter-spacing: 1px; color: var(--ink-soft);
+		margin-bottom: 14px; text-transform: uppercase;
+	}
+	.d-desc { font-size: 13px; line-height: 1.45; flex: 1; margin: 0; }
+	.d-foot {
+		margin-top: 14px; display: flex; justify-content: space-between;
+		font-family: var(--font-mono); font-size: 10px;
+		letter-spacing: 2px; font-weight: 600; color: var(--ink-soft);
+		border-top: 1px dashed var(--ink-soft); padding-top: 10px;
+	}
+	.arrow { color: var(--tang); font-size: 14px; }
+	.highlight { background: var(--amber); }
+	.highlight .d-num, .highlight .d-foot { color: var(--ink); }
+	.highlight .d-foot { border-top-color: var(--ink); }
+	.tape {
+		position: absolute; top: -1px; right: -1px;
+		background: var(--tang); color: var(--ink);
+		font-family: var(--font-mono); font-size: 10px;
+		letter-spacing: 1.5px; font-weight: 700;
+		padding: 4px 10px; text-transform: uppercase;
+	}
+</style>

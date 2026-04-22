@@ -1,0 +1,55 @@
+---
+import type { Locale } from '@lib/locale';
+import { useT } from '@lib/i18n';
+interface Props { locale: Locale; }
+const { locale } = Astro.props;
+const t = useT(locale);
+const rows: [string, string][] = [
+	[t('spec.type'), t('spec.type.value')],
+	[t('spec.engine'), t('spec.engine.value')],
+	[t('spec.channels'), t('spec.channels.value')],
+	[t('spec.memory'), t('spec.memory.value')],
+	[t('spec.docs'), t('spec.docs.value')],
+];
+---
+<div class="spec-card">
+	<div class="card-title">{t('spec.title')}</div>
+	<dl>
+		{rows.map(([k, v]) => (
+			<>
+				<dt>{k}</dt>
+				<dd>{v}</dd>
+			</>
+		))}
+	</dl>
+	<div class="card-foot">
+		<span>S/N 2026-0001</span>
+		<span class="ce">中/EN DUAL</span>
+	</div>
+</div>
+<style>
+	.spec-card {
+		background: var(--ink); color: var(--paper); padding: 28px;
+		border-top: 4px solid var(--tang);
+		font-family: var(--font-mono); font-size: 12px;
+		position: relative;
+	}
+	.spec-card::before {
+		content: ''; position: absolute; top: 12px; right: 12px;
+		width: 10px; height: 10px; background: var(--amber); border-radius: 50%;
+	}
+	.card-title {
+		font-family: var(--font-display); font-size: 20px; font-weight: 700;
+		margin-bottom: 18px; letter-spacing: -0.5px;
+	}
+	dl { display: grid; grid-template-columns: 1fr 1.3fr; gap: 8px 14px; margin: 0; }
+	dt { color: var(--amber); letter-spacing: 2px; font-size: 10px; text-transform: uppercase; font-weight: 600; padding-top: 2px; }
+	dd { font-weight: 500; line-height: 1.4; margin: 0; }
+	.card-foot {
+		margin-top: 22px; padding-top: 14px;
+		border-top: 1px dashed #555;
+		font-size: 10px; color: #999; letter-spacing: 2px;
+		display: flex; justify-content: space-between;
+	}
+	.ce { background: var(--amber); color: var(--ink); padding: 3px 8px; font-weight: 700; }
+</style>

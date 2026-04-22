@@ -1,0 +1,39 @@
+---
+import type { Locale } from '@lib/locale';
+import { useT } from '@lib/i18n';
+
+interface Props { locale: Locale; }
+const { locale } = Astro.props;
+const t = useT(locale);
+---
+
+<footer>
+	<span>HERMES/AGENT</span>
+	<span class="sep">/</span>
+	<span>S/N 2026-0001</span>
+	<span class="sep">/</span>
+	<span>{t('footer.mit')}</span>
+	<span class="spacer"></span>
+	<a href="https://github.com/Hubery23" rel="noopener" target="_blank">{t('footer.github')} ↗</a>
+	<span>{t('footer.rss')}</span>
+</footer>
+
+<style>
+	footer {
+		background: var(--ink);
+		color: #777;
+		padding: 24px 32px;
+		font-family: var(--font-mono);
+		font-size: 10px;
+		letter-spacing: 2px;
+		display: flex;
+		align-items: center;
+		gap: 20px;
+		border-top: 1px solid #333;
+		text-transform: uppercase;
+	}
+	.sep { color: var(--tang); }
+	.spacer { flex: 1; }
+	a { color: #aaa; text-decoration: none; }
+	a:hover { color: var(--sand); }
+</style>

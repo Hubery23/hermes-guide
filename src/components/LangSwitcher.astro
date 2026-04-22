@@ -1,0 +1,36 @@
+---
+import { swapLocalePath, type Locale } from '@lib/locale';
+
+interface Props {
+	locale: Locale;
+	pathname: string;
+}
+const { locale, pathname } = Astro.props;
+const zhHref = swapLocalePath(pathname, 'zh-CN');
+const enHref = swapLocalePath(pathname, 'en');
+---
+
+<div class="lang" role="group" aria-label="Language switcher">
+	<a href={zhHref} class:list={['lang-btn', { on: locale === 'zh-CN' }]}>中</a>
+	<a href={enHref} class:list={['lang-btn', { on: locale === 'en' }]}>EN</a>
+</div>
+
+<style>
+	.lang {
+		display: inline-flex;
+		border: 1px solid var(--amber);
+	}
+	.lang-btn {
+		padding: 4px 10px;
+		color: var(--amber);
+		font-family: var(--font-mono);
+		font-size: 11px;
+		font-weight: 700;
+		letter-spacing: 2px;
+		text-decoration: none;
+	}
+	.lang-btn.on {
+		background: var(--amber);
+		color: var(--ink);
+	}
+</style>

@@ -1,0 +1,63 @@
+---
+interface Pair { from: string; fromMeta: string; to: string; toMeta: string; }
+interface Props {
+	pairs: Pair[];
+	fromLabel: string;
+	toLabel: string;
+	fromTitle: string;
+	toTitle: string;
+}
+const { pairs, fromLabel, toLabel, fromTitle, toTitle } = Astro.props;
+---
+<div class="migration-grid">
+	<div class="mig-col">
+		<div class="mig-lab">{fromLabel}</div>
+		<h3>{fromTitle}</h3>
+		<ul>
+			{pairs.map(p => <li><span>{p.from}</span><span class="mono">{p.fromMeta}</span></li>)}
+		</ul>
+	</div>
+	<div class="mig-arrow">→</div>
+	<div class="mig-col target">
+		<div class="mig-lab">{toLabel}</div>
+		<h3>{toTitle}</h3>
+		<ul>
+			{pairs.map(p => <li><span>{p.to}</span><span class="mono">{p.toMeta}</span></li>)}
+		</ul>
+	</div>
+</div>
+<style>
+	.migration-grid {
+		display: grid; grid-template-columns: 1fr 60px 1fr;
+		gap: 0; border: 1.5px solid var(--ink); background: var(--ink);
+	}
+	.mig-col { background: var(--paper); padding: 28px; }
+	.mig-col.target { background: var(--ink); color: var(--sand); }
+	.mig-col h3 {
+		font-family: var(--font-display); font-size: 24px; font-weight: 700;
+		letter-spacing: -0.5px; margin-bottom: 4px;
+	}
+	.mig-lab {
+		font-family: var(--font-mono); font-size: 10px;
+		letter-spacing: 3px; font-weight: 700;
+		color: var(--tang); margin-bottom: 18px; text-transform: uppercase;
+	}
+	.mig-col.target .mig-lab { color: var(--amber); }
+	.mig-col ul { list-style: none; margin: 0; padding: 0; }
+	.mig-col li {
+		padding: 11px 0; border-bottom: 1px dotted currentColor;
+		font-size: 14px; display: flex; justify-content: space-between;
+	}
+	.mig-col li:last-child { border: none; }
+	.mono { font-size: 11px; opacity: 0.6; letter-spacing: 1px; font-family: var(--font-mono); }
+	.mig-arrow {
+		background: var(--tang); display: flex;
+		align-items: center; justify-content: center;
+		font-family: var(--font-display); font-size: 40px; font-weight: 800;
+		color: var(--ink);
+	}
+	@media (max-width: 760px) {
+		.migration-grid { grid-template-columns: 1fr; }
+		.mig-arrow { padding: 18px; font-size: 28px; }
+	}
+</style>

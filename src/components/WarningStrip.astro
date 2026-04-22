@@ -1,0 +1,44 @@
+---
+import LangSwitcher from './LangSwitcher.astro';
+import type { Locale } from '@lib/locale';
+
+interface Props {
+	locale: Locale;
+	pathname: string;
+}
+const { locale, pathname } = Astro.props;
+---
+
+<div class="strip">
+	<span class="dot"></span>
+	<span>● HERMES-AG</span>
+	<span class="sep">··</span>
+	<span class="hide-mobile">SELF-HOSTED AGENT · MADE FOR LEARNING</span>
+	<span class="spacer"></span>
+	<span class="hide-mobile">BATCH 26.Q2 · REV.A</span>
+	<LangSwitcher locale={locale} pathname={pathname} />
+</div>
+
+<style>
+	.strip {
+		background: var(--ink);
+		color: var(--amber);
+		height: 42px;
+		display: flex;
+		align-items: center;
+		padding: 0 28px;
+		gap: 20px;
+		border-bottom: 3px solid var(--tang);
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 2.5px;
+		font-weight: 700;
+	}
+	.dot { width: 8px; height: 8px; background: var(--tang); border-radius: 50%; }
+	.sep { color: var(--tang); }
+	.spacer { flex: 1; }
+	@media (max-width: 760px) {
+		.strip { font-size: 9px; gap: 10px; padding: 0 14px; }
+		.hide-mobile { display: none; }
+	}
+</style>
