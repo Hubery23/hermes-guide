@@ -10,8 +10,8 @@ export const dicts: Record<Locale, Record<string, string>> = {
 export function createTranslator(dict: Record<string, string>) {
 	return (key: string): string => {
 		const value = dict[key];
-		if (value === undefined || value === null) {
-			if (typeof console !== 'undefined') console.warn(`[i18n] missing key: ${key}`);
+		if (value === undefined) {
+			console.warn(`[i18n] missing key: ${key}`);
 			return key;
 		}
 		return value;

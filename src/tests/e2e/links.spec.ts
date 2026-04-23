@@ -10,8 +10,8 @@ const pathsToProbe = [
 ];
 
 test('all internal routes resolve (no 404)', async ({ request }) => {
-	for (const path of pathsToProbe) {
+	await Promise.all(pathsToProbe.map(async (path) => {
 		const resp = await request.get(path);
 		expect(resp.status(), `${path} should 200`).toBe(200);
-	}
+	}));
 });

@@ -1,4 +1,4 @@
-/* src/styles/theme.css — H 工业产品目录主题
+/* H 工业产品目录主题
  * 承担两件事：
  *   1. 定义 H 设计 token（色板）给营销页组件用
  *   2. 覆盖 Starlight 的 CSS 变量，让教程页也呈 H 风
@@ -11,6 +11,8 @@
 	--paper: #f4efe1;
 	--ink: #2b2b2e;
 	--ink-soft: #44444a;
+	--ink-muted: #777;
+	--ink-faint: #aaa;
 	--tang: #f5713a;
 	--amber: #e8c547;
 }

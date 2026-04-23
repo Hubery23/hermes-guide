@@ -6,6 +6,7 @@ import SpecCard from '@components/SpecCard.astro';
 import DayCard from '@components/DayCard.astro';
 import CompatChart from '@components/CompatChart.astro';
 import { useT } from '@lib/i18n';
+import { compatPairs } from '@lib/data';
 
 const locale = 'en' as const;
 const t = useT(locale);
@@ -19,14 +20,6 @@ const days = [
 	{ num: 'H/01.06', day: 'DAY 06', titleZh: '记忆与状态：会话、压缩、备份', titleEn: 'Memory & State', desc: 'Make Hermes remember what you said yesterday.', href: '/en/7-days/day-06/' },
 	{ num: 'H/01.07', day: 'DAY 07', titleZh: '全自动化：定时任务与故障排查', titleEn: 'Full Auto', desc: 'Natural-language cron; pinpoint typical errors.', href: '/en/7-days/day-07/' },
 	{ num: 'H/01.08', day: 'BONUS', titleZh: '从 OpenClaw 搬家：平滑迁移指南', titleEn: 'Leaving OpenClaw', desc: 'Tested crosswalk for skills and memory.', href: '/en/migrate/' },
-];
-
-const compatPairs = [
-	{ from: 'Skills', fromMeta: '/skills/*', to: 'Skills System', toMeta: 'hub-installable' },
-	{ from: 'Integrations', fromMeta: '50+ services', to: 'Toolsets + MCP', toMeta: 'composable' },
-	{ from: 'Heartbeats', fromMeta: 'cron-like', to: 'Scheduled Tasks', toMeta: 'natural-lang' },
-	{ from: 'Persistent Memory', fromMeta: '24/7 ctx', to: 'Memory System', toMeta: 'auto-compact' },
-	{ from: 'Bot Framework', fromMeta: 'multi-channel', to: 'Messaging Platforms', toMeta: 'plugin-based' },
 ];
 ---
 
@@ -140,20 +133,6 @@ const compatPairs = [
 		margin-bottom: 24px;
 	}
 	.hero-cta { display: flex; gap: 8px; margin-bottom: 36px; flex-wrap: wrap; }
-	.btn {
-		font-family: var(--font-mono);
-		font-size: 12px;
-		letter-spacing: 2.5px;
-		font-weight: 700;
-		text-transform: uppercase;
-		padding: 14px 22px;
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		text-decoration: none;
-	}
-	.btn-primary { background: var(--tang); color: var(--ink); }
-	.btn-ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--ink); }
 	.hero-stats { display: flex; gap: 40px; flex-wrap: wrap; }
 	.stat b {
 		font-family: var(--font-display);

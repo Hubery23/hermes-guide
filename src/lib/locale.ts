@@ -1,16 +1,17 @@
 export type Locale = 'zh-CN' | 'en';
 
+function isEnPath(pathname: string): boolean {
+	return pathname === '/en' || pathname === '/en/' || pathname.startsWith('/en/');
+}
+
 export function detectLocale(pathname: string): Locale {
-	if (pathname === '/en' || pathname === '/en/' || pathname.startsWith('/en/')) {
-		return 'en';
-	}
-	return 'zh-CN';
+	return isEnPath(pathname) ? 'en' : 'zh-CN';
 }
 
 export function stripLocale(pathname: string): string {
+	if (!isEnPath(pathname)) return pathname;
 	if (pathname === '/en' || pathname === '/en/') return '/';
-	if (pathname.startsWith('/en/')) return pathname.slice(3);
-	return pathname;
+	return pathname.slice(3);
 }
 
 export function swapLocalePath(pathname: string, target: Locale): string {
