@@ -25,3 +25,5 @@ pnpm-debug.log*
 # deploy tmp
 .vercel/
 .wrangler/
+test-results/
+playwright-report/
