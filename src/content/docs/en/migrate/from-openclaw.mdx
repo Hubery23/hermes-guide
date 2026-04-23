@@ -1,0 +1,38 @@
+---
+title: "Leaving OpenClaw: A Smooth Migration"
+description: "Author-tested crosswalk from OpenClaw to Hermes Agent concepts."
+sources:
+  - title: "OpenClaw official docs"
+    url: "https://openclaw.ai"
+  - title: "Hermes Agent official docs"
+    url: "https://hermes-agent.nousresearch.com/docs/"
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside type="caution" title="English version coming soon">
+The Chinese version is live [here](/migrate/). Translations welcome via [GitHub](https://github.com/Hubery23).
+</Aside>
+
+## Concept crosswalk
+
+| OpenClaw | → | Hermes Agent |
+|---|---|---|
+| Skills | → | Skills System |
+| Integrations | → | Toolsets + MCP |
+| Heartbeats | → | Scheduled Tasks |
+| Persistent Memory | → | Memory System |
+| Bot Framework | → | Messaging Platforms |
+
+## Migration steps (WIP)
+
+1. Backup OpenClaw skills dir and memory snapshot
+2. Install Hermes (see [Day 01](/en/7-days/day-01/))
+3. Map each skill to Hermes skill-hub format
+4. Restore memory and sessions
+5. Switch messaging platform bindings
+
+## Sources
+
+- OpenClaw: https://openclaw.ai
+- Hermes Agent: https://hermes-agent.nousresearch.com/docs/

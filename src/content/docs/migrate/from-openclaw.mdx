@@ -1,0 +1,38 @@
+---
+title: "从 OpenClaw 搬家：平滑迁移指南"
+description: "作者亲测过的 OpenClaw → Hermes Agent 概念映射与迁移流程。"
+sources:
+  - title: "OpenClaw 官方文档"
+    url: "https://openclaw.ai"
+  - title: "Hermes Agent 官方文档"
+    url: "https://hermes-agent.nousresearch.com/docs/"
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside type="tip" title="先跑通再迁移">
+如果你是 OpenClaw 新手，建议先跟着 [7 天入门](/7-days/) 跑一遍 Hermes，再回来看本指南。
+</Aside>
+
+## 概念映射表
+
+| OpenClaw | → | Hermes Agent |
+|---|---|---|
+| Skills | → | Skills System |
+| Integrations | → | Toolsets + MCP |
+| Heartbeats | → | Scheduled Tasks |
+| Persistent Memory | → | Memory System |
+| Bot Framework | → | Messaging Platforms |
+
+## 迁移步骤（撰写中）
+
+1. 备份 OpenClaw 的 skills 目录和记忆快照
+2. 安装 Hermes（参见 [Day 01](/7-days/day-01/)）
+3. 一一映射 skill 到 Hermes 的 skill hub 格式
+4. 恢复记忆与会话
+5. 切换消息平台接入
+
+## 资料来源
+
+- OpenClaw 官方文档：https://openclaw.ai
+- Hermes Agent 官方文档：https://hermes-agent.nousresearch.com/docs/
