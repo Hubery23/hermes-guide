@@ -1,27 +1,267 @@
 ---
-title: "记忆与状态：会话、压缩、备份"
-description: "让 Agent 记住昨天聊过的内容。"
+title: "Day 6 · 记忆与状态：会话、压缩、备份"
+description: "让 Hermes 记住昨天聊过的内容，把长对话压缩成可续写的短上下文，整盘备份打包。"
 day: 6
+duration: "30 分钟"
 milestone: false
 sources:
-  - title: "Hermes Agent · Installation"
-    url: "https://hermes-agent.nousresearch.com/docs/"
+  - title: "Hermes Agent · Memory"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/features/memory"
+  - title: "Hermes Agent · Sessions"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/sessions"
+  - title: "Hermes Agent · CLI Commands"
+    url: "https://hermes-agent.nousresearch.com/docs/reference/cli-commands/"
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Steps } from '@astrojs/starlight/components';
 
-<Aside type="caution" title="本章正在撰写">
-中文教程正在编辑中，敬请期待。你可以在 [GitHub 仓库](https://github.com/Hubery23) watch / star 获得更新通知，或提 issue 告诉我你最希望先看到哪一章。
-</Aside>
+## 今日目标
 
-## 本章会做什么
+让 Hermes 主动记住一条关于你的信息、把一段长对话压缩成一段摘要带到新会话、并做一次整盘备份。
 
-（详细步骤待补充。）
+---
+
+## 前置条件
+
+已完成 Day 2；最好跟 Hermes 有过一些对话（本章的 session 演示需要历史记录）。
+
+---
+
+## 先理解：Hermes 记忆的三层结构
+
+很多人一开始把「记忆」想成一个大桶。Hermes 其实有三层独立系统，各管各的：
+
+| 层 | 在哪 | 存什么 | 什么时候读写 |
+|----|------|--------|------------|
+| **长期记忆** | `~/.hermes/memories/MEMORY.md` `~/.hermes/memories/USER.md` | 环境事实、你的偏好、跨对话通用的经验 | **会话启动时**注入 system prompt；会话中写入不会立即生效（prefix cache 优化） |
+| **会话历史** | `~/.hermes/sessions/*.jsonl` + `~/.hermes/state.db` (SQLite) | 每次对话的完整消息、工具调用 | 会话进行中持续追加；结束后归档 |
+| **会话全文搜索** | SQLite FTS5 索引 | 所有历史会话的可搜索副本 | `session_search` 工具在对话里按需查询 |
+
+**两个关键设计选择要记住：**
+
+1. 长期记忆用 **frozen snapshot 模式**——你在这次对话里告诉它「以后请这样做」，它写入了磁盘，但**要下一次启动会话**才会进到它的系统提示里。这是为了最大化利用 LLM 的 prefix cache（省 token、更快）。
+2. `MEMORY.md` 有 **2200 字符上限**，`USER.md` 有 **1375 字符上限**。超了就必须合并整理，这是故意的——强制保持精炼。
+
+---
+
+## 步骤
+
+<Steps>
+
+1. **看一眼你现有的记忆**
+
+   ```bash
+   ls ~/.hermes/memories/
+   cat ~/.hermes/memories/MEMORY.md
+   cat ~/.hermes/memories/USER.md
+   ```
+
+   如果你之前没配置过记忆系统，这俩文件可能是空的或刚创建。先初始化一下：
+
+   ```bash
+   hermes memory setup
+   hermes memory status
+   ```
+
+   `status` 会告诉你当前用量（字符数 / 上限）。
+
+2. **让 Hermes 主动记一件事**
+
+   启动 Hermes，说一句明确的偏好：
+
+   ```
+   你：记一下，以后我发代码让你 review，用中文反馈，不要英文。
+   ```
+
+   正常情况下 Hermes 会：
+
+   1. 调用 `memory` 工具（`add` 动作）
+   2. 把这条偏好写到 `USER.md`
+   3. 回复你「记住了，下一次会话起开始生效」
+
+   <Aside type="caution" title="本次会话里还是旧的行为">
+     因为 frozen snapshot，新加的记忆**要到下一次 `hermes` 启动**才进系统提示。这不是 bug，是设计。如果你希望当前会话就生效，在对话里直接说一次就够了。
+   </Aside>
+
+3. **用 `/compress` 把长对话压缩成短摘要**
+
+   假设你跟它聊了很久（上下文接近模型上限），或者你想换话题但不想彻底丢掉前情：
+
+   ```
+   你：/compress
+   ```
+
+   Hermes 会：
+
+   1. 阅读当前全部对话
+   2. 生成结构化摘要（保留关键决策、待办、已验证的事实）
+   3. 把摘要写入长期记忆
+   4. **创建一个 continuation session**——新的会话，以这份摘要作为起点
+
+   带焦点参数可以让摘要更聚焦：
+
+   ```
+   你：/compress --focus "登录模块重构的进展"
+   ```
+
+   <Aside type="tip" title="什么时候用 /compress">
+     - 触到 token 限制警告时
+     - 会话里做了很多无关探索、想保留结论丢掉过程时
+     - 要把对话"交接"给另一个任务（或另一个人）时
+
+     不要频繁压缩。每次压缩都是一次信息损失。
+   </Aside>
+
+4. **给会话起名（`/title`）**
+
+   默认 Hermes 会在第一轮对话后自动起标题。不满意就自己起：
+
+   ```
+   你：/title Hermes 教程 Day 6
+   ```
+
+   限制：最长 100 字符、全局唯一、自动过滤控制字符。
+
+5. **查看历史 & 恢复会话**
+
+   退出对话到终端：
+
+   ```bash
+   hermes sessions list              # 默认显示最近 20 个
+   hermes sessions list --limit 50
+   hermes sessions list --source telegram   # 按平台筛
+   hermes sessions stats             # 总数、消息量、数据库大小
+   ```
+
+   恢复对话有 3 种粒度：
+
+   ```bash
+   hermes --continue             # 最近一次 CLI 会话
+   hermes -c                     # 同上，简写
+   hermes -c "项目 A"             # 按标题找最新一个变体（A → A #2 → A #3）
+   hermes --resume 7e4f2b8c      # 按 session ID 精确恢复
+   ```
+
+6. **查看 / 搜索历史对话**
+
+   在当前对话里用 `/history` 看本会话完整滚动记录：
+
+   ```
+   你：/history
+   ```
+
+   跨会话搜索用 `session_search` 工具——这个是 Hermes 自己会调用的，你可以这样提示：
+
+   ```
+   你：上周我们聊过一个关于 K8s 的 operator 设计方案，帮我找回来
+   ```
+
+   Hermes 会用 `session_search` 对 SQLite FTS5 索引做全文查询、归纳匹配段落。
+
+7. **做一次整盘备份**
+
+   Hermes 把配置、skill、会话、cron、凭据全放在 `~/.hermes/` 下。备份这整个状态：
+
+   ```bash
+   hermes backup                                 # 默认导到 ~/hermes-backup-<timestamp>.zip
+   hermes backup -o /tmp/hermes.zip              # 指定输出
+   hermes backup --quick                         # 只备份核心状态（config + state.db + .env + cron）
+   hermes backup --quick --label "pre-upgrade"   # 升级前的安全快照
+   ```
+
+   <Aside type="tip" title="为什么可以在 Hermes 运行时备份">
+     SQLite 用的是 WAL 模式，备份走 `backup()` API 做一致性快照，**不需要停 Hermes**。这和你直接 `cp state.db` 不一样——后者可能拿到半截写入。
+   </Aside>
+
+8. **恢复备份**
+
+   ```bash
+   hermes import hermes-backup-2026.04.15.zip
+   hermes import backup.zip --force   # 覆盖已存在文件不再确认
+   ```
+
+   <Aside type="caution" title="不是 restore，是 import">
+     官方命令叫 `hermes import`，不是 `hermes restore`。记混了会找不到命令。
+   </Aside>
+
+</Steps>
+
+---
+
+## 进阶：外部记忆提供商
+
+如果内置记忆不够用（跨几百个会话做知识图谱检索、或跟团队共享长期记忆），可以挂外部 provider：
+
+| Provider | 适用场景 |
+|----------|--------|
+| **Mem0** | 轻量云服务，API 简单 |
+| **Honcho** | 专做 AI agent 的用户建模 |
+| **Supermemory** | 浏览器 / 笔记聚合检索 |
+| 还有 OpenViking / Hindsight / Holographic / RetainDB / ByteRover | 各自细分场景 |
+
+外部 provider 是**增强**不是替代——内置的 `MEMORY.md` 永远是首选，外部只负责补充语义检索。具体配置见官方 Memory 文档。
+
+---
 
 ## 验证成果
 
-（本章完成后的可观察输出将列在这里。）
+```
+$ hermes memory status
+MEMORY.md:  1423 / 2200 chars (64%)
+USER.md:    672  / 1375 chars (48%)
 
-## 资料来源
+$ hermes sessions list --limit 3
+● 2026-04-23 21:10  Hermes 教程 Day 6          cli      24 messages
+● 2026-04-23 20:05  登录模块重构               cli      89 messages (compressed)
+● 2026-04-23 19:30  登录模块重构 #2            cli      11 messages
 
-- Hermes Agent 官方文档：https://hermes-agent.nousresearch.com/docs/
+$ hermes backup --quick --label "day6-done"
+✓ state.db (WAL-safe copy)
+✓ config.yaml / .env
+✓ cron jobs
+✓ credentials
+Archive: ~/hermes-backup-day6-done.zip (2.1 MB)
+```
+
+---
+
+## 常见问题
+
+<Aside type="danger" title="hermes memory setup 报「memory full」">
+  `MEMORY.md` 或 `USER.md` 触顶了。手动合并：
+
+  ```bash
+  $EDITOR ~/.hermes/memories/MEMORY.md   # 把相关条目合并、删掉过期的
+  hermes memory status                    # 确认降到 80% 以下
+  ```
+
+  或让 Hermes 帮你：`你：整理一下 MEMORY.md，合并重复条目`
+</Aside>
+
+<Aside type="danger" title="/compress 后找不到原会话了">
+  原会话**没被删**，只是 Hermes 跳到了 continuation session。用 `hermes sessions list` 找到原 session ID，`hermes --resume <id>` 回去。
+</Aside>
+
+<Aside type="danger" title="备份文件巨大（几百 MB）">
+  通常是会话历史堆太久。两种处理：
+
+  ```bash
+  # 清理 30 天前已结束的会话
+  hermes sessions prune --older-than 30
+
+  # 或只做 quick 备份（不含会话）
+  hermes backup --quick
+  ```
+</Aside>
+
+<Aside type="note" title="我想手动编辑 MEMORY.md 可以吗？">
+  可以。格式就是普通 Markdown，随便改。只要你没超字符限制、没引入奇怪的控制字符，Hermes 下次启动会照读。
+
+  但**不建议**把密钥/凭据写到 `MEMORY.md`——记忆内容会直接进系统提示，等于让每次对话都带着这些数据过模型。
+</Aside>
+
+<Aside type="note" title="多机同步 ~/.hermes/">
+  不推荐直接把 `~/.hermes/` 做成云盘同步，`state.db` 是 SQLite 文件，多端并发写会坏。
+
+  推荐做法：定期 `hermes backup` + 把 zip 放云盘。换机器时 `hermes import` 恢复。
+</Aside>

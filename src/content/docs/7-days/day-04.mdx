@@ -1,27 +1,261 @@
 ---
-title: "让 Agent 动手：内置工具实战"
-description: "调用至少 2 个内置工具，看到真实副作用。"
+title: "Day 4 · 调用内置工具：搜索、终端、浏览器"
+description: "Hermes 自带 47+ 工具。今天挑三个最常用的跑通：web_search、terminal、browser。"
 day: 4
+duration: "30 分钟"
 milestone: false
 sources:
-  - title: "Hermes Agent · Installation"
-    url: "https://hermes-agent.nousresearch.com/docs/"
+  - title: "Hermes Agent · Tools & Toolsets"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/features/tools"
+  - title: "Hermes Agent · Browser Automation"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/features/browser"
+  - title: "Hermes Agent · Tool Gateway"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/features/tool-gateway"
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Steps } from '@astrojs/starlight/components';
 
-<Aside type="caution" title="本章正在撰写">
-中文教程正在编辑中，敬请期待。你可以在 [GitHub 仓库](https://github.com/Hubery23) watch / star 获得更新通知，或提 issue 告诉我你最希望先看到哪一章。
-</Aside>
+## 今日目标
 
-## 本章会做什么
+在一次对话里让 Hermes 至少调用 **2 个内置工具**（推荐 terminal + web_search），并看到它主动决定「用什么工具、为什么用」。
 
-（详细步骤待补充。）
+---
+
+## 前置条件
+
+- 已完成 Day 2，主对话能正常使用
+- 本机装了 Chrome（做 browser 部分时需要，前两个工具不需要）
+
+---
+
+## 工具 ≠ 技能
+
+这是很多人一开始的困惑：
+
+| | 工具（Tool） | 技能（Skill） |
+|---|---|---|
+| 粒度 | 低：一个原子能力 | 高：一段可复用工作流 |
+| 例子 | `web_search`、`terminal`、`read_file` | `code-review`、`daily-standup` |
+| 谁决定用 | **Hermes 自己**根据对话判断 | 你显式触发（`/skill-name`）或在对话里暗示 |
+| 在哪里定义 | 内置，跟着版本发布 | 社区包，从 Skills Hub 安装 |
+
+今天只讲工具。技能在 Day 5。
+
+---
+
+## 步骤
+
+<Steps>
+
+1. **看看有哪些工具可用**
+
+   在对话里输入：
+
+   ```
+   /tools list
+   ```
+
+   或在终端（退出会话后）：
+
+   ```bash
+   hermes tools --summary
+   ```
+
+   你会看到按 **toolset** 分组的工具列表。核心 toolset 包括：
+
+   | toolset | 里面是什么 |
+   |---------|----------|
+   | `web` | `web_search`、`web_extract`——搜索、抓网页正文 |
+   | `terminal` | `terminal`、`process`、`read_file`、`patch`——shell 执行、读写文件 |
+   | `browser` | `browser_navigate`、`browser_snapshot`、`browser_vision`——驱动 Chrome |
+   | `vision` | `vision_analyze`——图片理解 |
+   | `memory` | `memory`、`session_search`——读写长期记忆（Day 6 会讲） |
+   | `todo` | `todo`——管理任务清单 |
+   | `cronjob` | `cronjob`——定时任务（Day 7 会讲） |
+
+2. **试一下 terminal 工具**
+
+   这个工具在 Day 1 你就已经用过了，但今天我们有意识地观察它：
+
+   ```
+   你：用 terminal 统计当前目录下有多少 .md 文件
+   ```
+
+   正常情况下 Hermes 会：
+   1. **告诉你它要运行什么命令**（`find . -name "*.md" | wc -l` 之类）
+   2. **等你按回车确认**（危险命令会强制确认，普通命令可配置为自动批准）
+   3. 给你运行结果
+
+   <Aside type="caution" title="批准机制是故意设计，不要全开">
+     Hermes 默认对「能改东西」的命令要求手动批准（rm、mv、sudo、网络请求等）。不要图省事改成「全部自动批准」——哪怕你自己写的命令你都可能手滑，何况 AI。
+   </Aside>
+
+3. **试一下 web_search 工具——先解决 API Key**
+
+   Hermes 的联网搜索默认走 **Firecrawl**（一个专业的爬虫 SaaS）。三条路径任选：
+
+   | 选择 | 怎么配 | 适合谁 |
+   |------|-------|--------|
+   | Firecrawl 云服务 | `hermes config set FIRECRAWL_API_KEY fc-xxx`（注册 [firecrawl.dev](https://firecrawl.dev) 拿 key） | 想省事、不介意有云调用 |
+   | 自建 Firecrawl | Docker 起一套，然后 `hermes config set FIRECRAWL_API_URL http://localhost:3002` | 隐私要求高、有 4–8GB 空闲内存 |
+   | Nous Tool Gateway | 订阅 Nous Portal，自动走 Portal 的工具代理，零配置 | 已经在用 Nous Portal 的付费用户 |
+   | 什么都不配 | 自动回退到内置的 `duckduckgo-search` 技能（免费但质量一般） | 临时试试、低频场景 |
+
+   <Aside type="tip" title="推荐：先用 Firecrawl 云服务的免费额度">
+     Firecrawl 注册就送免费额度，不用绑信用卡。用完了再决定要不要升级或自建。
+   </Aside>
+
+4. **试一下 web_search**
+
+   配好 Key 后，启动 Hermes，问一个需要实时信息的问题：
+
+   ```
+   你：帮我搜一下 2025 年 Claude 4 发布的时间线
+   ```
+
+   Hermes 应该：
+   1. 判断这需要联网（训练数据截止期之外的信息）
+   2. 调用 `web_search`
+   3. 再用 `web_extract` 抓几个结果页的正文
+   4. 归纳给你带引用的答案
+
+   回复里应出现 `[1]` `[2]` 这类引用标记，点过去是原文链接。这就是 Hermes 调用工具成功的标志。
+
+5. **试一下 browser 工具——先启动带 CDP 的 Chrome**
+
+   浏览器工具的原理是 **Chrome DevTools Protocol (CDP)**：Hermes 连接一个开着调试端口的 Chrome 实例，通过协议驱动它。**必须先把 Chrome 启动起来再连**。
+
+   **macOS：**
+
+   ```bash
+   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+     --remote-debugging-port=9222 \
+     --user-data-dir="$HOME/.hermes/chrome-debug" \
+     --no-first-run &
+   ```
+
+   **Linux：**
+
+   ```bash
+   google-chrome \
+     --remote-debugging-port=9222 \
+     --user-data-dir="$HOME/.hermes/chrome-debug" \
+     --no-first-run &
+   ```
+
+   <Aside type="caution" title="--user-data-dir 是关键">
+     **不加 `--user-data-dir` 会导致：**如果你已经有 Chrome 在跑，新开的这个会被原进程「吞掉」，结果是新窗口有了，但 9222 端口没人监听。用独立的用户目录相当于开一个全新的、与你日常 Chrome 完全隔离的 Chrome profile。
+   </Aside>
+
+6. **连接并使用 browser**
+
+   在 Hermes 对话里：
+
+   ```
+   你：/browser connect
+   ```
+
+   应该回复 `Connected to ws://localhost:9222`。然后让它做点事：
+
+   ```
+   你：打开 https://news.ycombinator.com，告诉我第一页排名前 5 的帖子标题和链接。
+   ```
+
+   Hermes 会依次调用 `browser_navigate` → `browser_snapshot`（读取页面 accessibility tree）→ 归纳结果。全程你能在那个 Chrome 窗口里**眼看着它在点**。
+
+   结束后：
+
+   ```
+   你：/browser disconnect
+   ```
+
+   退出这个 CDP 连接，让 Hermes 回到默认模式。
+
+7. **按平台启用不同的工具**
+
+   你可能不希望 Telegram 里的机器人能执行 shell 命令。`hermes tools`（在终端，不是在对话里）会打开一个**按平台配置**的交互界面：
+
+   ```bash
+   hermes tools
+   ```
+
+   典型的安全配置：
+
+   | 平台 | 启用的 toolset |
+   |------|----------------|
+   | CLI（本地终端） | 全部 |
+   | Telegram / Discord / Slack | 只开 `web`、`memory`、`todo`，**关闭 `terminal` 和 `browser`** |
+   | WebUI | `web`、`browser`、`vision` |
+
+   这份配置写在 `~/.hermes/config.yaml` 的 `toolsets` 字段下，可以手动编辑。
+
+</Steps>
+
+---
 
 ## 验证成果
 
-（本章完成后的可观察输出将列在这里。）
+一次完整对话应该能看到 Hermes 自主选择和调用工具：
 
-## 资料来源
+```
+你：这个月 NousResearch/hermes-agent 仓库合并了哪些 release？
 
-- Hermes Agent 官方文档：https://hermes-agent.nousresearch.com/docs/
+Hermes: 让我查一下最新的 release 信息。
+  → [tool] web_search: "NousResearch hermes-agent releases 2026"
+  → [tool] web_extract: https://github.com/NousResearch/hermes-agent/releases
+
+根据最新数据，这个月合并的 release 包括 ...（引用 [1][2]）
+```
+
+---
+
+## 常见问题
+
+<Aside type="danger" title="web_search 返回空 / 报错「Firecrawl unauthorized」">
+  1. 检查 `~/.hermes/.env` 里 `FIRECRAWL_API_KEY` 是不是 `fc-` 开头
+  2. 或者直接切换到内置回退：`hermes config set tools.web.fallback duckduckgo-search`
+  3. Nous Portal 订阅用户应该看到工具自动路由到 Portal，不需要手动配 Firecrawl
+</Aside>
+
+<Aside type="danger" title="/browser connect 报「Connection refused」">
+  Chrome 没启动，或启动时没带 `--remote-debugging-port=9222`。检查：
+
+  ```bash
+  # 应看到有进程监听 9222
+  lsof -i :9222
+  ```
+
+  还不行就**关掉所有 Chrome 窗口**再按步骤 5 那条命令启动。
+</Aside>
+
+<Aside type="danger" title="/browser 系列命令在 Telegram 里不好使">
+  `/browser` 是 **CLI 交互命令**，不是发给 LLM 的指令，所以不会在 gateway（Telegram/Discord/Slack）里生效。聊天平台上只能用 `browser_navigate` 这类工具指令——而且大部分情况你不会想让远程机器人开浏览器。
+</Aside>
+
+<Aside type="note" title="terminal 总是弹批准提示，很烦">
+  自己很确定安全的命令前缀可以加到白名单：
+
+  ```yaml
+  # ~/.hermes/config.yaml
+  terminal:
+    auto_approve_prefixes:
+      - "git status"
+      - "git diff"
+      - "ls"
+      - "pwd"
+  ```
+
+  **不要**把 `rm`、`mv`、`curl | bash`、`sudo` 加进白名单，宁可每次多按一次回车。
+</Aside>
+
+<Aside type="note" title="想要隔离沙箱运行 shell 命令？">
+  `terminal` 工具支持换后端，把执行放到容器里：
+
+  ```yaml
+  terminal:
+    backend: docker      # 或 ssh / modal / daytona
+    timeout: 180
+  ```
+
+  本机装了 Docker 的话这是最省心的隔离方案——Hermes 拿不到你的系统文件。
+</Aside>

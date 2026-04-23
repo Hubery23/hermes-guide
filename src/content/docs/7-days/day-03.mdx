@@ -1,27 +1,268 @@
 ---
-title: "入驻聊天室：Telegram / Discord / Slack"
-description: "BotFather 发 token、.env、让 Hermes 在群里说话。"
+title: "Day 3 · 入驻聊天室：Telegram / Discord / Slack"
+description: "让 Hermes 在你常用的 IM 里说话。主线走 Telegram，Discord / Slack 给清单。"
 day: 3
+duration: "30 分钟"
 milestone: false
 sources:
-  - title: "Hermes Agent · Installation"
-    url: "https://hermes-agent.nousresearch.com/docs/"
+  - title: "Hermes Agent · Messaging Gateway"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/messaging"
+  - title: "Hermes Agent · Telegram"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/telegram"
+  - title: "Hermes Agent · Discord"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/discord"
+  - title: "Hermes Agent · Slack"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/slack"
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Steps } from '@astrojs/starlight/components';
 
-<Aside type="caution" title="本章正在撰写">
-中文教程正在编辑中，敬请期待。你可以在 [GitHub 仓库](https://github.com/Hubery23) watch / star 获得更新通知，或提 issue 告诉我你最希望先看到哪一章。
+## 今日目标
+
+在你最常用的 IM（Telegram / Discord / Slack 三选一）里 @Hermes，它能回复。
+
+---
+
+## 前置条件
+
+- 已完成 Day 2，`hermes` 能在终端正常对话
+- 你选好了一个平台：**没特殊偏好就选 Telegram**——BotFather 一条命令就能拿到 token，门槛最低
+
+---
+
+## 先理解：Gateway 是独立进程
+
+Hermes 在 IM 里说话靠的是 **messaging gateway**——一个独立于 `hermes` CLI 的长驻进程，职责是把各平台的消息翻译成 Hermes 能处理的对话。
+
+```
+┌──────────────┐     ┌────────────────────┐     ┌────────────┐
+│ Telegram /   │ ←→ │ hermes gateway     │ ←→ │ Hermes     │
+│ Discord /    │     │ （长驻进程）        │     │ 核心（LLM）│
+│ Slack ...    │     └────────────────────┘     └────────────┘
+└──────────────┘
+```
+
+这意味着两件事：
+
+1. **终端里关掉 `hermes` 对 gateway 没有影响**——gateway 是独立的。
+2. **gateway 必须一直运行**，机器人才会在线。可以前台跑（`hermes gateway`），也可以装成系统服务（`hermes gateway install`）。
+
+<Aside type="caution" title="默认白名单：陌生人进不来">
+  Gateway 默认**拒绝**所有不在 allowlist 里的用户。这是刻意的安全设计——你的机器人背后是一个能访问你终端的 AI，不做这层防护后果严重。陌生人 DM 机器人时会收到配对码，你用 `hermes pairing approve` 审批后才能通过。
 </Aside>
 
-## 本章会做什么
+---
 
-（详细步骤待补充。）
+## 主线：Telegram（30 分钟）
+
+<Steps>
+
+1. **在 BotFather 注册机器人**
+
+   在 Telegram 搜索 **@BotFather** 或打开 [t.me/BotFather](https://t.me/BotFather)，按顺序发：
+
+   ```
+   /newbot
+   Hermes Agent        ← 显示名（任意）
+   my_hermes_bot       ← 用户名（必须以 bot 结尾，全局唯一）
+   ```
+
+   BotFather 会返回一段形如 `123456789:ABCdef...` 的 token，**这就是你机器人的密码**，泄漏等同把机器人拱手让人。
+
+2. **找到你自己的 Telegram user ID**
+
+   Gateway 的白名单用的是**数字 user ID**，不是用户名。在 Telegram 搜 **@userinfobot**，发一条消息，它会返回你的 ID（类似 `987654321`）。
+
+3. **运行配置向导**
+
+   回到终端：
+
+   ```bash
+   hermes gateway setup
+   ```
+
+   向导会问你：平台选什么（选 Telegram）→ 粘贴 token → 粘贴允许使用的 user ID。向导会自动写入 `~/.hermes/.env`：
+
+   ```bash
+   TELEGRAM_BOT_TOKEN=123456789:ABCdef...
+   TELEGRAM_ALLOWED_USERS=987654321
+   ```
+
+   <Aside type="tip" title="手写也行">
+     不想走向导就直接写 `~/.hermes/.env`。`hermes config set` 也可以，它会自动判断这是密钥、落到 `.env` 而不是 `config.yaml`。
+   </Aside>
+
+4. **启动 Gateway（前台）**
+
+   ```bash
+   hermes gateway
+   ```
+
+   看到 `gateway online · telegram connected` 这类日志就说明通了。**不要关闭这个终端**，关了机器人就离线。
+
+5. **在 Telegram 里对话**
+
+   打开你刚建的机器人（BotFather 返回消息里有 `t.me/xxx` 链接），点「开始」然后发一条：
+
+   ```
+   你好，现在几点？
+   ```
+
+   正常响应：机器人回复当前时间并说明它用 terminal 工具查的。
+
+6. **把 Gateway 装成后台服务（可选但推荐）**
+
+   前台跑只适合测试。要让机器人 7×24 在线：
+
+   ```bash
+   # 用户级服务（macOS launchd / Linux systemd --user）
+   hermes gateway install
+   hermes gateway start
+   hermes gateway status
+   ```
+
+   之后 `hermes gateway start/stop/status` 就是你管理它的三个命令。
+
+</Steps>
+
+---
+
+## 群聊里：privacy mode 和 @mention
+
+把机器人加到群里后，默认会**看不见**大部分消息——这是 Telegram 的 privacy mode：机器人只能看到 `/` 开头的命令、直接回复它的消息、以及 @机器人 的消息。
+
+两种处理方式，选一种：
+
+| 方式 | 操作 | 效果 |
+|------|------|------|
+| **保留 privacy mode**（推荐） | 不动设置，在群里用 `@my_hermes_bot 问题` 触发 | 机器人只在被 @ 时响应，不刷屏 |
+| **关闭 privacy mode** | BotFather → `/mybots` → Bot Settings → Group Privacy → Turn off，**然后把机器人从群里踢掉再重新拉进群** | 机器人能看到所有消息。需要配合 `require_mention: true` 否则会乱回 |
+
+关闭 privacy 后，用下面这段 `~/.hermes/config.yaml` 限制只在 @ 或特定关键词时响应：
+
+```yaml
+telegram:
+  require_mention: true
+  mention_patterns:
+    - "^\\s*小助手\\b"   # 叫「小助手」也触发
+```
+
+---
+
+## 分支：Discord 关键步骤
+
+<Aside type="note" title="只看清单，细节请跳官方文档">
+  Discord 配置比 Telegram 繁琐（要在 Developer Portal 点 4–5 个开关）。下面是最容易踩坑的地方，完整步骤看官方 [Discord Setup](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/discord)。
+</Aside>
+
+1. **建 Application + Bot**：[Discord Developer Portal](https://discord.com/developers/applications) → New Application → 侧栏 Bot → Reset Token（**只显示一次，立刻复制**）。
+
+2. **必须开两个 Privileged Intent**（90% 的"机器人不回复"都是这里漏开的）：
+   - **Server Members Intent**
+   - **Message Content Intent** ← 不开这个，机器人会收到消息事件但文本是空的
+
+3. **邀请 bot 进服务器**，权限整数用推荐值 **`274878286912`**（包含发消息、读历史、发附件、加反应等）：
+
+   ```
+   https://discord.com/oauth2/authorize?client_id=YOUR_APP_ID&scope=bot+applications.commands&permissions=274878286912
+   ```
+
+4. **找 user ID**：Discord 设置 → 高级 → 打开「开发者模式」→ 右键自己的名字 → 复制 User ID。
+
+5. **`.env` 要写**：
+
+   ```bash
+   DISCORD_BOT_TOKEN=...
+   DISCORD_ALLOWED_USERS=你的_user_id
+   ```
+
+6. 再跑一次 `hermes gateway setup` 选 Discord，或直接 `hermes gateway` 启动。
+
+---
+
+## 分支：Slack 关键步骤
+
+<Aside type="note" title="Slack 走 Socket Mode，不需要公网 URL">
+  Hermes 在 Slack 里用 WebSocket 长连接，所以你**不需要公网域名 / 内网穿透**，家里机器也能跑。完整步骤看官方 [Slack Setup](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/slack)。
+</Aside>
+
+在 [api.slack.com/apps](https://api.slack.com/apps) 建应用，然后：
+
+| 步骤 | 关键点 |
+|------|--------|
+| OAuth & Permissions | 至少加这些 bot scope：`chat:write`、`app_mentions:read`、`channels:history`、`im:history`、`im:write`、`users:read`、`files:read`、`files:write` |
+| Socket Mode | 打开开关，生成 **App-Level Token**（`xapp-` 开头） |
+| Event Subscriptions | 订阅 `message.im`、`message.channels`、`app_mention` ← **90% 的"机器人不回复"是这一步漏订阅** |
+| Install to Workspace | 生成 **Bot Token**（`xoxb-` 开头） |
+
+两个 token 写到 `~/.hermes/.env`：
+
+```bash
+SLACK_BOT_TOKEN=xoxb-...
+SLACK_APP_TOKEN=xapp-...
+SLACK_ALLOWED_USERS=U01XXXXX   # Slack user ID，不是用户名
+```
+
+最后在目标频道执行 `/invite @Hermes Agent`，机器人才会看到该频道的消息。
+
+---
 
 ## 验证成果
 
-（本章完成后的可观察输出将列在这里。）
+无论你选哪个平台，本章完成的标志是：
 
-## 资料来源
+```
+$ hermes gateway status
+● gateway:  running
+● telegram: connected
+● session:  ready
 
-- Hermes Agent 官方文档：https://hermes-agent.nousresearch.com/docs/
+# 在 Telegram / Discord / Slack 里：
+你：@Hermes 9.8 和 9.11 哪个大？
+Hermes：9.8 比 9.11 大。9.8 = 9.80，而 9.11 = 9.11，所以 9.80 > 9.11。
+```
+
+---
+
+## 常见问题
+
+<Aside type="danger" title="机器人不回复（通用排查顺序）">
+  1. `hermes gateway status` — 进程是否还活着
+  2. `hermes gateway` 前台重启，看启动日志有没有报错
+  3. 检查 token 是否正确（`.env` 里有没有多空格、引号）
+  4. 检查自己的 user ID 是否在 `*_ALLOWED_USERS` 里
+</Aside>
+
+<Aside type="danger" title="Discord：收到消息但 Hermes 看不到内容">
+  99% 是 **Message Content Intent 没打开**。Discord Developer Portal → Bot → Privileged Gateway Intents → 打开 Message Content Intent，然后**重启 gateway**（Discord 端不需要重新邀请）。
+</Aside>
+
+<Aside type="danger" title="Slack：机器人进了频道但不响应 @">
+  去 Event Subscriptions 页面检查是否订阅了 `app_mention` 和 `message.channels`。**Slack 的 Event Subscription 改了之后不需要重新安装应用，但 gateway 需要重启**。
+</Aside>
+
+<Aside type="danger" title="Telegram 群里机器人收不到消息">
+  Privacy mode 没关，并且你不是用 `@bot名 ...` 格式触发的。两个选择：用 @ 触发；或关掉 privacy mode 后**把机器人踢出群再重新拉进来**（设置才生效）。
+</Aside>
+
+<Aside type="note" title="陌生人给机器人发消息，我收到配对码提示？">
+  这是 gateway 的内置保护：不在 allowlist 里的用户发消息，机器人不会回，但会给你这个管理员一个配对码。审批命令：
+
+  ```bash
+  hermes pairing approve telegram ABC123
+  ```
+
+  配对码 1 小时过期。不想要这个机制可以在 `.env` 设 `GATEWAY_ALLOW_ALL_USERS=true`——**但机器人有终端访问权，开放给所有人风险很大**，除非你知道自己在做什么。
+</Aside>
+
+<Aside type="note" title="会话状态什么时候重置？">
+  默认规则：空闲超过一定时长（Telegram 240 分钟、Discord 60 分钟）或到每日固定时间（默认凌晨 4 点）会重置。想改就编辑 `~/.hermes/gateway.json`：
+
+  ```json
+  {
+    "reset_by_platform": {
+      "telegram": { "mode": "idle", "idle_minutes": 60 }
+    }
+  }
+  ```
+</Aside>

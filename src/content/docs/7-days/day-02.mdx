@@ -1,27 +1,210 @@
 ---
-title: "挑个大脑：模型选型与 API 接入"
-description: "Claude / GPT / 本地模型怎么选；配 API key。"
+title: "Day 2 · 挑个大脑：模型选型与 API 接入"
+description: "选好 Provider，配置 API Key，向 Hermes 发出第一条有意义的消息。"
 day: 2
+duration: "20 分钟"
 milestone: false
 sources:
-  - title: "Hermes Agent · Installation"
-    url: "https://hermes-agent.nousresearch.com/docs/"
+  - title: "Hermes Agent · AI Providers"
+    url: "https://hermes-agent.nousresearch.com/docs/integrations/providers"
+  - title: "Hermes Agent · Configuration"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/configuration"
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Steps } from '@astrojs/starlight/components';
 
-<Aside type="caution" title="本章正在撰写">
-中文教程正在编辑中，敬请期待。你可以在 [GitHub 仓库](https://github.com/Hubery23) watch / star 获得更新通知，或提 issue 告诉我你最希望先看到哪一章。
+## 今日目标
+
+配置好 Provider 和模型，向 Hermes 提一个需要推理的问题，得到正确回答。
+
+---
+
+## 前置条件
+
+已完成 Day 1——`hermes` 命令能正常运行。
+
+---
+
+## 两个命令，别搞混
+
+Hermes 有两个"模型命令"，职责完全不同：
+
+| 命令 | 在哪里运行 | 能做什么 |
+|------|-----------|---------|
+| `hermes model` | **终端**（Hermes 外部） | 完整向导：新增 Provider、输入 API Key、OAuth 登录、设置默认模型 |
+| `/model` | **Hermes 对话内** | 只能在**已配置**的 Provider 之间快速切换，不能新增 |
+
+**第一次配置，或想新增 Provider，必须用 `hermes model`。** 需要先退出当前会话（`Ctrl+C` 或 `/quit`），在普通终端运行。
+
+---
+
+## 步骤
+
+<Steps>
+
+1. **选 Provider**
+
+   根据你的情况找对应行：
+
+   | 你的情况 | 推荐 Provider | 配置方式 |
+   |---------|-------------|---------|
+   | 有 Kimi API Key | `kimi-coding` | `KIMI_API_KEY` 写入 `.env` |
+   | 有 DeepSeek Key | `deepseek` | `DEEPSEEK_API_KEY` 写入 `.env` |
+   | 有通义千问 Key | `alibaba`（Qwen） | `DASHSCOPE_API_KEY` 写入 `.env` |
+   | 有智谱 GLM Key | `zai` | `GLM_API_KEY` 写入 `.env` |
+   | 第一次用，最省事 | Nous Portal | `hermes model` → OAuth |
+   | 已有 Anthropic API Key | `anthropic` | `hermes model` → 输入 Key |
+   | 已有 ChatGPT / OpenAI | `openai-codex` | `hermes model` → OAuth |
+   | 有 GitHub Copilot 订阅 | `copilot` | `hermes model` → OAuth（免额外费用） |
+   | 想路由多个模型 | OpenRouter | `OPENROUTER_API_KEY` 写入 `.env` |
+   | 本地私有部署 | 自定义端点（Ollama） | `hermes model` → Custom endpoint |
+
+   <Aside type="caution" title="模型上下文最低要求：64K tokens">
+     Hermes 要求模型至少支持 64,000 tokens 的上下文窗口。主流模型（Claude、GPT、Gemini、Qwen、DeepSeek、Kimi）都满足。使用本地 Ollama 模型时，启动时需要指定足够的上下文大小（`ollama run qwen2.5-coder -c 65536`）。
+   </Aside>
+
+2. **运行配置向导**
+
+   ```bash
+   hermes model
+   ```
+
+   向导会引导你：选择 Provider → 输入 API Key（或 OAuth 浏览器登录）→ 从模型列表中选择默认模型 → 保存到配置文件。
+
+   如果你更喜欢手动写入，直接用 `hermes config set`：
+
+   ```bash
+   # 以 Kimi 为例（其他 Provider 只需换 Key 名和 Provider 名）
+   hermes config set KIMI_API_KEY sk-xxx
+   hermes config set model.provider kimi-coding
+   hermes config set model.default kimi-for-coding
+   ```
+
+   <Aside type="tip" title="hermes config set 会自动分流">
+     API Key 和密钥自动写入 `~/.hermes/.env`，非密钥设置写入 `~/.hermes/config.yaml`。你不需要手动判断写哪个文件。
+   </Aside>
+
+3. **确认配置**
+
+   查看当前生效的完整配置：
+
+   ```bash
+   hermes config
+   ```
+
+   Hermes 的配置存放在 `~/.hermes/` 目录下，结构如下：
+
+   ```
+   ~/.hermes/
+   ├── config.yaml   ← 非密钥设置（Provider 名、模型名、功能开关等）
+   └── .env          ← 密钥（API Key、Bot Token 等，不进 git）
+   ```
+
+4. **验证：发一条需要推理的消息**
+
+   启动 Hermes：
+
+   ```bash
+   hermes
+   ```
+
+   发送一条经典推理测试题：
+
+   ```
+   你：9.8 和 9.11 哪个大？
+   ```
+
+   **正确回答：** Hermes 应回复「9.8 比 9.11 大」并给出推理（9.8 = 9.80 > 9.11）。
+
+   如果回复为空或答错，说明 API Key 无效或模型配置有问题——参考下方常见问题。
+
+5. **在对话中切换模型**
+
+   进入对话后，`/model` 可以在已配置的 Provider 和模型间快速切换：
+
+   ```
+   你：/model
+   ```
+
+   加上 `--global` 参数会把切换持久化到 `config.yaml`，否则只对当前会话有效：
+
+   ```
+   你：/model deepseek/deepseek-chat --global
+   ```
+
+   查看当前模型的 token 用量：
+
+   ```
+   你：/usage
+   ```
+
+</Steps>
+
+---
+
+## 关于辅助工具与 OpenRouter
+
+<Aside type="note" title="视觉、联网等工具需要一个辅助模型">
+  即使主 Provider 是 Kimi 或 DeepSeek，Hermes 的**网页摘要、图片识别**等工具默认会调用一个辅助模型（默认 Gemini Flash，经由 OpenRouter）。如果你想启用这些工具，建议额外配一个 OpenRouter Key：
+
+  ```bash
+  hermes config set OPENROUTER_API_KEY sk-or-v1-xxx
+  ```
+
+  这不是必须的，不配也能正常对话——只是联网和视觉类工具会不可用。
 </Aside>
 
-## 本章会做什么
-
-（详细步骤待补充。）
+---
 
 ## 验证成果
 
-（本章完成后的可观察输出将列在这里。）
+完成本章后，运行 `hermes config` 能看到 Provider 和模型已设置，向 Hermes 发推理题能得到正确回答：
 
-## 资料来源
+```
+$ hermes config
+Provider:  kimi-coding
+Model:     kimi-for-coding
+Status:    ✓ Connected
 
-- Hermes Agent 官方文档：https://hermes-agent.nousresearch.com/docs/
+$ hermes
+你：9.8 和 9.11 哪个大？
+Hermes：9.8 比 9.11 大。因为 9.8 = 9.80，9.11 = 9.11，所以 9.80 > 9.11。
+```
+
+---
+
+## 常见问题
+
+<Aside type="danger" title="API Key 无效 / 401 Unauthorized">
+  检查 Key 是否过期、拼写是否正确。重新写入：
+
+  ```bash
+  hermes config set KIMI_API_KEY sk-xxx   # 替换成你的 Provider 对应的变量名
+  ```
+
+  写入后查看 `~/.hermes/.env` 确认内容是否正确。
+</Aside>
+
+<Aside type="danger" title="回复为空，或 429 Too Many Requests">
+  速率限制或账户余额不足。两种处理方式：
+
+  1. 运行 `hermes model` 换一个 Provider 试试
+  2. 配置备用模型（failover），让 Hermes 自动切换：
+
+  ```yaml
+  # 编辑 ~/.hermes/config.yaml
+  fallback_model:
+    provider: openrouter
+    model: anthropic/claude-sonnet-4
+  ```
+</Aside>
+
+<Aside type="danger" title="/model 只能看到一个 Provider 的模型">
+  `/model` 只能在已配置的 Provider 之间切换，不能新增。退出会话，在终端运行 `hermes model` 添加其他 Provider，再重新进入对话。
+</Aside>
+
+<Aside type="note" title="想免费用，有哪些选项？">
+  **GitHub Copilot**：已有 Copilot 订阅的用户可以直接用，不额外收费。`hermes model` → 选 GitHub Copilot → OAuth 登录。
+
+  **Google Gemini OAuth**：提供免费配额，无需绑信用卡。`hermes model` → 选「Google Gemini (OAuth)」→ 浏览器登录 Google 账号。注意 Hermes 会提示此方式存在违反 Google 使用条款的风险，需要手动确认。
+</Aside>

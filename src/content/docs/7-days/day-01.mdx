@@ -1,27 +1,189 @@
 ---
-title: "跑起来：Hermes 的第一次对话"
-description: "装好本体、开好环境变量，完成第一次对话。"
+title: "Day 1 · 安装 Hermes，说出第一句话"
+description: "一条 curl 命令装好 Hermes，选好 Provider，完成第一次对话。唯一前置条件：Git。"
 day: 1
-milestone: false
+duration: "30 分钟"
+milestone: true
 sources:
   - title: "Hermes Agent · Installation"
-    url: "https://hermes-agent.nousresearch.com/docs/"
+    url: "https://hermes-agent.nousresearch.com/docs/getting-started/installation"
+  - title: "Hermes Agent · Quickstart"
+    url: "https://hermes-agent.nousresearch.com/docs/getting-started/quickstart"
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Steps } from '@astrojs/starlight/components';
 
-<Aside type="caution" title="本章正在撰写">
-中文教程正在编辑中，敬请期待。你可以在 [GitHub 仓库](https://github.com/Hubery23) watch / star 获得更新通知，或提 issue 告诉我你最希望先看到哪一章。
+## 今日目标
+
+运行 `hermes` 或 `hermes --tui`，Hermes 能正常回复你的第一条消息。
+
+---
+
+## 前置条件
+
+**唯一要求：已安装 Git。**
+
+安装器会自动处理其余所有依赖：Python 3.11（通过 uv，无需 sudo）、Node.js v22、ripgrep、ffmpeg。你不需要预先安装它们。
+
+```bash
+git --version   # 有输出即可，版本不限
+```
+
+如果提示 `command not found`，先安装 Git：
+
+```bash
+# macOS
+brew install git
+# 或 Xcode 命令行工具（无需 Homebrew）
+xcode-select --install
+
+# Ubuntu / Debian / WSL2
+sudo apt update && sudo apt install git
+
+# Fedora / RHEL
+sudo dnf install git
+```
+
+<Aside type="caution" title="Windows 原生不支持">
+  Hermes 支持 Linux、macOS、WSL2、Android（Termux）。Windows 原生环境不支持。请先安装 WSL2，再在 WSL2 终端里运行下面的命令。
 </Aside>
 
-## 本章会做什么
+---
 
-（详细步骤待补充。）
+## 步骤
+
+<Steps>
+
+1. **一键安装**
+
+   复制这条命令，粘贴到终端回车：
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+   ```
+
+   安装器会依次完成：下载依赖、克隆仓库、创建虚拟环境、将 `hermes` 注册到全局 PATH。整个过程约 1–3 分钟，取决于网络速度。
+
+   <Aside type="note" title="安装器做了什么">
+     你不需要手动 pip install 任何东西。安装器检测缺失项并自动补齐，包括 Python 版本管理（通过 uv）。
+   </Aside>
+
+2. **刷新 shell**
+
+   安装完成后，终端会提示你执行：
+
+   ```bash
+   source ~/.bashrc   # bash 用户
+   # 或
+   source ~/.zshrc    # zsh 用户（macOS 默认）
+   ```
+
+   刷新后，`hermes` 命令才会在 PATH 里生效。
+
+3. **选择 Provider**
+
+   这是最关键的一步。运行交互式向导选择 LLM 提供商和模型：
+
+   ```bash
+   hermes model
+   ```
+
+   | 情况 | 推荐选择 |
+   |------|----------|
+   | 第一次用，想最快跑起来 | Nous Portal 或 OpenRouter |
+   | 已有 Anthropic API Key | Anthropic（Claude） |
+   | 已有 OpenAI API Key | OpenAI Codex |
+   | 想用本地模型 | Ollama 或自定义 OpenAI 兼容端点 |
+
+   <Aside type="caution" title="模型上下文最低要求：64K tokens">
+     Hermes 要求模型至少支持 64,000 tokens 的上下文窗口。大多数主流模型（Claude、GPT-4o、Gemini、Qwen、DeepSeek）都满足。使用本地模型时，确保启动参数设置了足够的上下文（llama.cpp 用 `--ctx-size 65536`）。
+   </Aside>
+
+   <Aside type="tip" title="可以随时切换">
+     Provider 不是一次性决定。任何时候运行 `hermes model` 都可以切换，配置无损保留。
+   </Aside>
+
+4. **第一次对话**
+
+   有两种界面，选你喜欢的：
+
+   ```bash
+   hermes          # 经典 CLI
+   hermes --tui    # 现代 TUI（推荐，支持鼠标、弹窗、非阻塞输入）
+   ```
+
+   启动后你会看到 Hermes 的欢迎横幅，显示当前模型和可用工具。输入一条消息试试：
+
+   ```
+   你好，帮我检查一下当前目录里有什么文件。
+   ```
+
+   成功的标志：
+   - 横幅里显示你刚才选好的 Provider 和模型
+   - Hermes 正常回复，没有报错
+   - 它能调用 terminal 工具执行你的请求
+
+5. **验证 session 恢复**
+
+   在退出 Hermes 之后，运行：
+
+   ```bash
+   hermes --continue   # 恢复上一次的对话
+   hermes -c           # 简写
+   ```
+
+   如果能回到刚才的对话，说明 session 持久化正常。这在后续多任务并行时很重要。
+
+</Steps>
+
+---
 
 ## 验证成果
 
-（本章完成后的可观察输出将列在这里。）
+完成本章后，你应该能观察到：
 
-## 资料来源
+```
+$ hermes
+Welcome to Hermes Agent v0.10.x
+Provider: anthropic · Model: claude-opus-4.6
+Tools: terminal, file, web_search ...
 
-- Hermes Agent 官方文档：https://hermes-agent.nousresearch.com/docs/
+You: 你好
+Hermes: 你好！我是 Hermes，有什么可以帮你的？
+```
+
+---
+
+## 常见问题
+
+<Aside type="danger" title="hermes: command not found">
+  执行 `source ~/.bashrc`（或 `~/.zshrc`）。如果还不行，手动检查 PATH：
+
+  ```bash
+  export PATH="$HOME/.local/bin:$PATH"
+  ```
+
+  将这行加到你的 shell 配置文件末尾，再重新 source。
+</Aside>
+
+<Aside type="danger" title="安装脚本执行失败">
+  检查能否访问 GitHub。网络受限时，尝试 pip 手动安装：
+
+  ```bash
+  python3 -m pip install hermes-agent
+  ```
+</Aside>
+
+<Aside type="danger" title="Hermes 打开了，但回复是空的或报错">
+  Provider 认证或模型选择有问题。重新运行：
+
+  ```bash
+  hermes model
+  ```
+
+  确认 Provider、模型名、API Key 三项都正确。
+</Aside>
+
+<Aside type="note" title="更全面的诊断">
+  运行 `hermes doctor`，它会列出所有缺失项和修复建议。遇到奇怪问题时这是第一个该跑的命令。
+</Aside>

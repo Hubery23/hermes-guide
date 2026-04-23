@@ -1,27 +1,288 @@
 ---
-title: "教它新本事：安装第一个 Skill"
-description: "从官方 hub 装 skill，对话触发它。"
+title: "Day 5 · 教它新本事：安装第一个 Skill"
+description: "从 Skills Hub 装一个技能，用 /slash 或自然对话触发它。"
 day: 5
+duration: "25 分钟"
 milestone: true
 sources:
-  - title: "Hermes Agent · Installation"
-    url: "https://hermes-agent.nousresearch.com/docs/"
+  - title: "Hermes Agent · Skills System"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/features/skills"
+  - title: "Skills Hub"
+    url: "https://agentskills.io/"
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Steps } from '@astrojs/starlight/components';
 
-<Aside type="caution" title="本章正在撰写">
-中文教程正在编辑中，敬请期待。你可以在 [GitHub 仓库](https://github.com/Hubery23) watch / star 获得更新通知，或提 issue 告诉我你最希望先看到哪一章。
-</Aside>
+## 今日目标
 
-## 本章会做什么
+从 Skills Hub 装一个你会真的用的技能（例如 `code-review` 或 `axolotl`），然后在对话里触发它并得到预期产出。
 
-（详细步骤待补充。）
+---
+
+## 前置条件
+
+- 已完成 Day 2（基础对话能工作）
+- 完成 Day 4 更好，这样你已经理解「工具」和「技能」的区别
+
+---
+
+## 为什么这一天是 milestone
+
+前 4 天你学的都是 Hermes **出厂自带**的东西：模型、平台、工具。今天你第一次**给它添加能力**。装完第一个 skill 之后，Hermes 对你就不再是一个通用助手，而是**针对你工作流定制的 agent**。这是一道分水岭。
+
+---
+
+## 工具 vs 技能：再确认一次
+
+| | 工具（Day 4） | 技能（Day 5） |
+|---|---|---|
+| 谁维护 | Hermes 核心团队，跟版本发布 | 社区 + 官方，独立版本 |
+| 在哪里找 | 内置 | [agentskills.io](https://agentskills.io/) 及各 hub |
+| 装在哪 | 已经装好 | `~/.hermes/skills/` |
+| 触发方式 | Hermes 自动判断何时调用 | `/skill-name` 显式触发，或 Hermes 识别上下文自动加载 |
+
+技能的本质是**一份带有 YAML frontmatter 的 Markdown 文档（`SKILL.md`）**，告诉 Hermes「遇到这类任务时按以下流程来」。它是 prompt + 可执行片段的组合包。
+
+---
+
+## 步骤
+
+<Steps>
+
+1. **浏览 Skills Hub**
+
+   先在终端（退出当前对话）跑：
+
+   ```bash
+   hermes skills browse
+   ```
+
+   你会看到所有可用技能，按 source 分组：
+
+   | Source | 它是什么 |
+   |--------|---------|
+   | `official` | Hermes 官方出品，默认信任 |
+   | `openai/skills` · `anthropics/skills` | 大厂官方，默认 trusted |
+   | `skills-sh/*` | [skills.sh](https://skills.sh/) 公开目录 |
+   | `clawhub` · `lobehub` · 自定义 GitHub | 社区 |
+
+   也可以在网页浏览：打开 [agentskills.io](https://agentskills.io/) 或 [skills.sh](https://skills.sh/)。
+
+2. **搜索一个你会用的技能**
+
+   ```bash
+   # 关键词搜索
+   hermes skills search code review
+   hermes skills search kubernetes
+   hermes skills search python
+   ```
+
+   搜索会跨所有已配置的 source。用 `--source` 限定：
+
+   ```bash
+   hermes skills search react --source skills-sh
+   ```
+
+   <Aside type="tip" title="推荐第一个装这个">
+     没想好装什么就试 **`official/code-review`**。每次你写完一段代码让它 `/code-review`，它会按一个结构化 checklist 给你 feedback。几乎所有开发者都能用上。
+   </Aside>
+
+3. **预览（强烈建议装之前先 inspect）**
+
+   安装等于把别人的 `SKILL.md` 和脚本拉到你本地、并授权 Hermes 按它执行。**先读再装**是 agent 世界的基本素养：
+
+   ```bash
+   hermes skills inspect openai/skills/k8s
+   ```
+
+   会显示：
+
+   - frontmatter（这个 skill 声明了什么工具/环境变量）
+   - 主要 procedure
+   - 需要的权限 / 脚本
+   - 来源仓库地址
+
+   如果 inspect 里发现它要 `curl | bash` 或访问奇怪的外部 URL，**别装**。
+
+4. **安装**
+
+   ```bash
+   hermes skills install official/code-review
+   ```
+
+   安装时会自动触发**安全扫描**：
+
+   ```
+   Scanning skill for security issues...
+   ✓ No dangerous patterns
+   ✓ No untrusted network calls
+   ✓ Required tools: terminal, read_file (already available)
+   ✓ Installed to ~/.hermes/skills/dev/code-review/
+   ```
+
+   <Aside type="caution" title="遇到 policy block 怎么办">
+     非官方 skill 触发告警时，仔细看告警内容。如果你审过代码、确认安全，可以 `--force` 继续：
+
+     ```bash
+     hermes skills install some-source/some-skill --force
+     ```
+
+     **但 `--force` 无法绕过 `dangerous` 级别的警告**——那些要么是真有风险，要么用错了工具，反正都不该装。
+   </Aside>
+
+5. **查看已装的技能**
+
+   ```bash
+   hermes skills list
+   ```
+
+   或在对话里：
+
+   ```
+   /skills
+   ```
+
+   每个装好的技能都会**自动注册成一个 slash 命令**：
+   `/code-review` · `/axolotl` · `/k8s` 等。
+
+6. **第一次触发它**
+
+   启动 `hermes`，随便写一段代码（或 cd 到任意 git 仓库），然后：
+
+   ```
+   你：/code-review
+   ```
+
+   Hermes 会加载这个 skill 的完整内容，然后按照它的 procedure 工作——可能会问你「要 review 哪部分」，然后读文件、跑分析、给出结构化反馈。
+
+   **第二种触发方式：自然语言**
+
+   ```
+   你：帮我按代码审查标准过一遍刚才写的那个登录函数
+   ```
+
+   Hermes 识别到这个请求和 `code-review` skill 匹配，会自动加载并应用它的流程。
+
+7. **更新与卸载**
+
+   ```bash
+   hermes skills check      # 看哪些 skill 有更新
+   hermes skills update     # 一键全部更新
+   hermes skills uninstall code-review   # 卸载
+   ```
+
+   <Aside type="note" title="改了的 skill 不会被自动覆盖">
+     Hermes 记得每个 skill 的原始 hash。你改过的版本**永远不会被 update 覆盖**，这是刻意保护用户修改的设计。
+
+     想让一个改过的 skill 重新接受更新：
+
+     ```bash
+     hermes skills reset code-review              # 保留你的改动但允许将来更新
+     hermes skills reset code-review --restore    # 丢弃改动、还原到最新官方版
+     ```
+   </Aside>
+
+</Steps>
+
+---
+
+## 进阶：写一个「你自己的」skill（5 分钟版）
+
+等你熟了，按这个骨架起步：
+
+```bash
+mkdir -p ~/.hermes/skills/personal/my-routine
+```
+
+`~/.hermes/skills/personal/my-routine/SKILL.md`：
+
+```markdown
+---
+name: my-routine
+description: 我的早间 standup 流程
+version: 0.1.0
+---
+
+# My Routine
+
+## When to Use
+当我输入 "/my-routine" 或者早上打招呼时。
+
+## Procedure
+1. 读取昨天的 git log（--since="yesterday"）
+2. 读 ~/.hermes/memories/MEMORY.md 里的 "今日计划"
+3. 用 todo 工具生成一张当日任务清单
+4. 按优先级给出前三项建议
+
+## Verification
+成功标志：输出一张带优先级的 markdown 清单。
+```
+
+保存后运行 `hermes`，输入 `/skills` 你应该能看到它，`/my-routine` 就能触发。完整 schema 见官方文档「Skills System」。
+
+---
 
 ## 验证成果
 
-（本章完成后的可观察输出将列在这里。）
+今天的终点：
 
-## 资料来源
+```
+$ hermes skills list
+✓ code-review    (official)    v1.4.2
+✓ k8s            (openai)      v0.8.0
 
-- Hermes Agent 官方文档：https://hermes-agent.nousresearch.com/docs/
+$ hermes
+你：/code-review
+Hermes: 要我 review 哪个文件或哪段代码？（可以粘贴代码、给文件路径、或让我扫整个仓库）
+你：review src/auth/login.ts
+Hermes: → [tool] read_file: src/auth/login.ts
+        按 code-review checklist 过一遍：
+        1. [正确性] ...
+        2. [安全] ...
+        3. [可读性] ...
+```
+
+---
+
+## 常见问题
+
+<Aside type="danger" title="hermes skills install 报 network timeout">
+  Hub 抓取 manifest 时连不上。分情况：
+
+  - 整体不通：检查代理（`HTTPS_PROXY` 环境变量），或换 `--source github` 直装 GitHub 仓库
+  - 单一 source 慢：`hermes skills browse --source official` 只拉官方
+</Aside>
+
+<Aside type="danger" title="/code-review 报 skill not found">
+  1. `hermes skills list` 确认是否装成功
+  2. 装好但对话里看不见：**退出当前会话重进**，`/skills` 清单是在会话启动时加载的
+  3. 仍然看不见：`ls ~/.hermes/skills/**/SKILL.md`，查是否真的有这个文件
+</Aside>
+
+<Aside type="danger" title="skill 触发后报「required tool not available」">
+  Skill 声明了需要某个 toolset（如 `browser`），但你当前平台没开。两条路：
+
+  - 在当前平台启用该 toolset（`hermes tools`）
+  - 或改用一个不依赖该 toolset 的同类 skill
+</Aside>
+
+<Aside type="note" title="官方推荐的第一批技能">
+  想不到装什么？先装这几个多数人会用得上的：
+
+  - `official/code-review` — 结构化 code review
+  - `official/plan` — 需求拆解 + 设计方案
+  - `official/gif-search` — 找 GIF 用的轻量工具
+  - `openai/skills/k8s` — 如果你搞 Kubernetes
+</Aside>
+
+<Aside type="tip" title="团队共享 skill">
+  如果团队里多个人要用相同的一批 skill，把它们放到一个共享 git 仓库，然后在 `~/.hermes/config.yaml` 里声明：
+
+  ```yaml
+  skills:
+    external_dirs:
+      - ${SKILLS_REPO}/skills
+  ```
+
+  外部目录对 Hermes **只读**（不会被 agent 改写），同名的本地 skill 会优先于外部 skill。
+</Aside>

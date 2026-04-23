@@ -1,38 +1,327 @@
 ---
 title: "从 OpenClaw 搬家：平滑迁移指南"
-description: "作者亲测过的 OpenClaw → Hermes Agent 概念映射与迁移流程。"
+description: "一条 hermes claw migrate 搞定 SOUL.md、skills、配置、API Key、平台 token。带概念映射表和手动重建清单。"
 sources:
+  - title: "Hermes Agent · Migrate from OpenClaw"
+    url: "https://hermes-agent.nousresearch.com/docs/guides/migrate-from-openclaw"
+  - title: "Hermes Agent · CLI Commands"
+    url: "https://hermes-agent.nousresearch.com/docs/reference/cli-commands/"
   - title: "OpenClaw 官方文档"
     url: "https://openclaw.ai"
-  - title: "Hermes Agent 官方文档"
-    url: "https://hermes-agent.nousresearch.com/docs/"
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Steps } from '@astrojs/starlight/components';
 
-<Aside type="tip" title="先跑通再迁移">
-如果你是 OpenClaw 新手，建议先跟着 [7 天入门](/7-days/) 跑一遍 Hermes，再回来看本指南。
+## 这篇给谁看
+
+正在用 OpenClaw、想切到 Hermes 的人。想**保留现有的人格、技能、记忆、已经配好的机器人 token**，不想从零再来。
+
+完全没用过 OpenClaw 就跳过这篇。想先跑通 Hermes 基础再回来看，去 [7 天入门](/7-days/)。
+
+<Aside type="tip" title="先备份，再迁移">
+  动手前至少做两件事：
+
+  1. **`cp -r ~/.openclaw ~/.openclaw.bak-$(date +%F)`** — 手工备个份
+  2. 跑 `hermes claw migrate --dry-run` 先预演，看会迁哪些东西、有没有冲突
+
+  官方工具会**复制**文件而不是移动，但稳妥起见自己也留一份。
 </Aside>
+
+---
+
+## 五分钟速览
+
+OpenClaw 和 Hermes 的关键概念 1:1 对得上，官方有专门的迁移工具一把梭：
+
+```bash
+hermes claw migrate --dry-run    # 预演，不改任何文件
+hermes claw migrate              # 实际执行
+hermes claw cleanup              # 验证没问题后清理 OpenClaw 残留（可选）
+```
+
+默认会自动搬：SOUL.md、记忆、skills、Provider 配置、平台 token、MCP servers、会话策略。**这就是最常见的情况**——只需这三条命令。
+
+下面的内容帮你理解它在做什么、哪里可能出问题、哪些东西需要你手动处理。
+
+---
 
 ## 概念映射表
 
-| OpenClaw | → | Hermes Agent |
-|---|---|---|
-| Skills | → | Skills System |
-| Integrations | → | Toolsets + MCP |
-| Heartbeats | → | Scheduled Tasks |
-| Persistent Memory | → | Memory System |
-| Bot Framework | → | Messaging Platforms |
+迁移之前，先在头脑里把两套术语对上：
 
-## 迁移步骤（撰写中）
+| OpenClaw | → | Hermes Agent | 备注 |
+|---|---|---|---|
+| `SOUL.md`（人格） | → | `~/.hermes/SOUL.md` | 直接复制，文件格式兼容 |
+| `IDENTITY.md` | → | 合并进 `SOUL.md` | 归档，**需手动合并** |
+| `AGENTS.md`（项目级指令） | → | 项目目录里的 `AGENTS.md` | 需指定 `--workspace-target` |
+| `MEMORY.md` + `USER.md` + 日记 | → | `~/.hermes/memories/` | 合并到新的记忆系统 |
+| Skills（4 个位置：workspace / managed / personal / project） | → | `~/.hermes/skills/openclaw-imports/` | 全部归拢到同一目录 |
+| Integrations（插件） | → | Toolsets + MCP servers | 部分自动，部分手动 |
+| Heartbeats（心跳任务） | → | Cron jobs | **需手动重建**（见下方） |
+| `HEARTBEAT.md` | → | Cron job 描述文本 | 归档，**需手动改写** |
+| `BOOTSTRAP.md` | → | Context file 或 skill | 归档，**需手动改写** |
+| `TOOLS.md` | → | 不用迁 | Hermes 有内置工具说明 |
+| Bot 平台配置（TG/DC/Slack/...） | → | `~/.hermes/.env` 里的 `*_BOT_TOKEN` / `*_ALLOWED_USERS` | 自动 |
+| Session 重置策略 | → | `config.yaml` 的 `session_reset` | 自动 |
+| MCP servers | → | `config.yaml` 的 `mcp_servers` | 自动，stdio + HTTP/SSE |
+| Persistent Memory（长期记忆） | → | Memory System | 见 [Day 6](/7-days/day-06/) |
 
-1. 备份 OpenClaw 的 skills 目录和记忆快照
-2. 安装 Hermes（参见 [Day 01](/7-days/day-01/)）
-3. 一一映射 skill 到 Hermes 的 skill hub 格式
-4. 恢复记忆与会话
-5. 切换消息平台接入
+---
 
-## 资料来源
+## 迁移流程
 
-- OpenClaw 官方文档：https://openclaw.ai
-- Hermes Agent 官方文档：https://hermes-agent.nousresearch.com/docs/
+<Steps>
+
+1. **预演一次**
+
+   ```bash
+   hermes claw migrate --dry-run
+   ```
+
+   输出是一份**变更计划**：会迁哪些文件、冲突怎么处理、哪些需要归档到 archive 目录。**读完再执行**——几分钟时间能避免后面一个小时的回滚。
+
+   如果 OpenClaw 装在非默认路径：
+
+   ```bash
+   hermes claw migrate --dry-run --source /path/to/your/.openclaw
+   ```
+
+2. **选好「要不要迁 API Key」**
+
+   默认 preset 是 `full`，会把 OpenClaw 里配置的 API Key（OpenRouter / OpenAI / Anthropic / DeepSeek / Gemini 等）一起搬过来。
+
+   如果你想更谨慎一点（比如在另一台机器上迁、或者想趁机轮换 Key），用 `user-data` preset：
+
+   ```bash
+   hermes claw migrate --preset user-data
+   ```
+
+   这会跳过 API Key，其他都迁。之后自己重新 `hermes config set ANTHROPIC_API_KEY ...` 即可。
+
+3. **处理 skill 重名冲突**
+
+   如果你在 Hermes 已经装了同名 skill（比如两边都装过 `code-review`），默认策略是 `skip`（保留你现在的版本）。其他选项：
+
+   ```bash
+   hermes claw migrate --skill-conflict rename     # 把 OpenClaw 的那个改名再迁
+   hermes claw migrate --skill-conflict overwrite  # 用 OpenClaw 的覆盖 Hermes 的（慎用）
+   ```
+
+4. **正式执行**
+
+   ```bash
+   hermes claw migrate
+   ```
+
+   非交互场景（脚本里）可以加 `--yes` 跳过确认，但不推荐第一次这么用。
+
+   结束时会打印一份迁移报告：
+
+   ```
+   ✓ SOUL.md migrated
+   ✓ memories: 3 files merged (MEMORY.md, USER.md, 2026-04-*.md)
+   ✓ skills: 12 migrated, 2 skipped (conflict: skip), 1 archived
+   ✓ providers: anthropic, openrouter, deepseek
+   ✓ bots: telegram, discord
+   ✓ mcp_servers: 4
+   ⚠ 6 items archived to ~/.hermes/migration/openclaw/2026-04-23-221532/archive/
+   ```
+
+5. **检查归档目录**
+
+   ```bash
+   ls ~/.hermes/migration/openclaw/*/archive/
+   ```
+
+   这里放的是**迁移工具不敢自动处理**的东西，你要挑着重建（见下节）。不处理不是 bug——只是 Hermes 里没有一一对应的目标。
+
+6. **重启 gateway（如果迁了平台 token）**
+
+   ```bash
+   # Linux / macOS 用户服务
+   systemctl --user restart hermes-gateway
+
+   # 或者，简单粗暴的方式
+   hermes gateway stop && hermes gateway start
+   ```
+
+   **WhatsApp 必须重扫码**：
+
+   ```bash
+   hermes whatsapp
+   ```
+
+7. **验证**
+
+   ```bash
+   hermes status --deep       # Provider 认证、平台连接都检查一遍
+   hermes skills list         # 确认 skill 都在
+   hermes gateway status      # gateway 和所有 bot 都连着
+   ```
+
+   进 Hermes 发一条消息，测试：
+   - SOUL.md 有没有生效（气质对不对）
+   - 记忆有没有带过来（问它一件 OpenClaw 时期它应该知道的事）
+   - 触发一个迁过来的 skill（Day 5 的触发方式）
+
+8. **确认没问题后清理**
+
+   ```bash
+   hermes claw cleanup
+   ```
+
+   这会移除 OpenClaw 的配置目录。**别急着跑**——建议至少用 Hermes 跑一两天，确认没漏掉的东西再清。
+
+</Steps>
+
+---
+
+## 需要手动重建的清单
+
+以下内容会被归档，不会自动迁：
+
+### `IDENTITY.md` → 合并进 `SOUL.md`
+
+两者职责重叠，Hermes 只认 `SOUL.md`。打开归档目录下的 `IDENTITY.md`，把其中还有用的段落手工拷到 `~/.hermes/SOUL.md`，检查有没有矛盾。
+
+### Heartbeats / `HEARTBEAT.md` → 改写成 cron job
+
+OpenClaw 的 heartbeat 机制在 Hermes 里对应 **cron jobs**（见 [Day 7](/7-days/day-07/)）。
+
+把 `HEARTBEAT.md` 里每个心跳的**意图 + 频率**抽出来，转写成一条 cron：
+
+```bash
+# 原 OpenClaw heartbeat：每天 9 点看 RSS 汇总
+hermes cron create "0 9 * * *" "扫我订阅的 RSS，归纳要点发到 telegram"
+```
+
+### `BOOTSTRAP.md` → 改写成 context file 或 skill
+
+OpenClaw 的 bootstrap 通常是"每次会话开始时先做 X"。Hermes 里有两个选择：
+
+- 简单的启动指令 → 放进 `AGENTS.md`（项目级）或 `SOUL.md`（全局）
+- 复杂的多步流程 → 写成一个 skill（见 [Day 5 进阶部分](/7-days/day-05/#进阶写一个你自己的-skill5-分钟版)）
+
+### 老 cron jobs / plugins / webhooks
+
+OpenClaw 的定时任务、自定义插件、外部 webhook 不走 `hermes claw migrate` 的自动通道。照着原 OpenClaw 的配置，在 Hermes 里用对应机制重建：
+
+| OpenClaw 里是 | Hermes 里用 |
+|---|---|
+| 定时任务 | `hermes cron create ...`（[Day 7](/7-days/day-07/)） |
+| 自定义工具 | Toolsets 或 MCP servers |
+| Webhook 接收 | gateway 的 webhook 模式或自写 MCP server |
+
+### 复杂 channel 配置（多账号、多 routing）
+
+工具只迁了**主账号**的平台 token 和 allowlist。如果你在 OpenClaw 有多个 Telegram 机器人、或有基于频道/用户的 routing 规则，手动在 `~/.hermes/.env` 和 `~/.hermes/config.yaml` 里重建。
+
+---
+
+## 常用参数速查
+
+```bash
+# 预演（强烈推荐先跑一次）
+hermes claw migrate --dry-run
+
+# 选 preset
+hermes claw migrate                         # = --preset full（默认，含 API Key）
+hermes claw migrate --preset user-data      # 不含 API Key
+
+# 路径
+hermes claw migrate --source /custom/.openclaw
+hermes claw migrate --workspace-target /path/to/project   # AGENTS.md 放到哪
+
+# 冲突处理
+hermes claw migrate --skill-conflict skip        # 默认
+hermes claw migrate --skill-conflict rename
+hermes claw migrate --skill-conflict overwrite
+hermes claw migrate --overwrite                  # 所有冲突都覆盖（慎用）
+
+# 自动化
+hermes claw migrate --yes                        # 跳过确认（脚本用）
+```
+
+---
+
+## 常见问题
+
+<Aside type="danger" title="「OpenClaw directory not found」">
+  迁移工具默认找 `~/.openclaw`。路径不是这个就加 `--source`：
+
+  ```bash
+  hermes claw migrate --source /path/to/.openclaw
+  ```
+
+  不确定在哪？搜一下：`find / -name "SOUL.md" -path "*openclaw*" 2>/dev/null`
+</Aside>
+
+<Aside type="danger" title="「No provider API keys found」">
+  OpenClaw 的 Key 可能存在四个位置，工具会按优先级找：
+
+  1. `openclaw.json` 的 config 字段
+  2. `~/.openclaw/.env`
+  3. config 的 `env` 子对象
+  4. `auth-profiles.json`
+
+  如果你用的是 `source: "file"` 或 `source: "exec"` 这类动态 SecretRef，**工具不会**自动解析，需要你在迁移后手工：
+
+  ```bash
+  hermes config set ANTHROPIC_API_KEY sk-ant-xxx
+  ```
+</Aside>
+
+<Aside type="danger" title="迁移后 skill 不出现">
+  迁过来的 skill 在 `~/.hermes/skills/openclaw-imports/` 下。**skill 清单是在 session 启动时加载的**，所以：
+
+  1. 退出当前 Hermes 会话重进
+  2. `/skills` 看清单
+  3. 还看不到就 `ls ~/.hermes/skills/openclaw-imports/` 确认文件真的在
+  4. 文件在但清单里没有 → `hermes skills audit` 重扫
+</Aside>
+
+<Aside type="danger" title="TTS 声音变了 / 没声音">
+  OpenClaw 的 TTS 设置可能在三个位置，工具按优先级找：
+
+  1. `messages.tts.providers.*`（新版）
+  2. `talk.providers.*`（旧版回退）
+  3. 更老的扁平 key
+
+  通过 OpenClaw UI 选过的 voice_id 有时不会自动迁。手动补：
+
+  ```bash
+  hermes config set tts.elevenlabs.voice_id YOUR_VOICE_ID
+  ```
+</Aside>
+
+<Aside type="danger" title="Gateway 迁完之后不连 Telegram">
+  90% 是迁了 token 但没重启 gateway。
+
+  ```bash
+  hermes gateway stop && hermes gateway start
+  # 或
+  systemctl --user restart hermes-gateway
+  ```
+
+  还不行：`hermes logs gateway --since 5m -f` 看实时日志，一般能看到具体的 401 / DNS / 网络错误。
+</Aside>
+
+<Aside type="note" title="能不能只迁一部分？">
+  可以。`--preset user-data` 跳过 API Key；`--skill-conflict skip` 保护你已有的 skill；单独跑迁移脚本搬个别文件也行（例如只复制 `SOUL.md` 过来，其他自己重配）。
+
+  不一定要追求「一次迁干净」，分两三次迁也没问题——工具是幂等的，重复跑最多输出"nothing to do"。
+</Aside>
+
+<Aside type="note" title="迁完之后 OpenClaw 还能继续用吗？">
+  能。迁移是**复制**不是**移动**，OpenClaw 原配置还在。但两边同时用会导致状态分裂（比如同一个 Telegram 机器人被两边抢着回复），不推荐长期并行。
+
+  过渡期建议：OpenClaw 的 gateway 停掉，Hermes 的跑起来。跑稳一周没问题后再 `hermes claw cleanup`。
+</Aside>
+
+---
+
+## 迁移完做什么
+
+1. 走一遍 [7 天入门](/7-days/)——不是为了再学一遍，而是验证"这些功能在 Hermes 下确实能跑"
+2. 读 [Day 7](/7-days/day-07/) 把所有 heartbeat 改写成 cron job
+3. 用 [Day 6](/7-days/day-06/) 的 `hermes backup` 给新环境打个初始快照，之后有事能快速回滚

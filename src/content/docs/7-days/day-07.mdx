@@ -1,27 +1,258 @@
 ---
-title: "全自动化：定时任务与故障排查"
-description: "自然语言写 cron；日志定位典型错误。"
+title: "Day 7 · 全自动化与诊断"
+description: "用自然语言写 cron、查 doctor 诊断输出，完成 7 天闭环。"
 day: 7
-milestone: false
+duration: "30 分钟"
+milestone: true
 sources:
-  - title: "Hermes Agent · Installation"
-    url: "https://hermes-agent.nousresearch.com/docs/"
+  - title: "Hermes Agent · Cron"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/features/cron"
+  - title: "Hermes Agent · CLI Commands"
+    url: "https://hermes-agent.nousresearch.com/docs/reference/cli-commands/"
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Steps } from '@astrojs/starlight/components';
 
-<Aside type="caution" title="本章正在撰写">
-中文教程正在编辑中，敬请期待。你可以在 [GitHub 仓库](https://github.com/Hubery23) watch / star 获得更新通知，或提 issue 告诉我你最希望先看到哪一章。
+## 今日目标
+
+两件事：
+
+1. **创建一条每日定时任务**，让 Hermes 每天固定时间给你发早报
+2. **跑通诊断命令**，至少熟悉 `hermes doctor`、`hermes status`、`hermes logs`
+
+> 如果你是从 OpenClaw 迁过来的，走完本章后直接看[「从 OpenClaw 搬家」](/migrate/from-openclaw/)，那是独立的一篇迁移指南。
+
+---
+
+## 前置条件
+
+- 已完成 Day 1–6
+- 做定时任务部分最好已经完成 Day 3（配了至少一个 IM gateway，这样早报能推送到 Telegram / Discord 之类）
+
+---
+
+## Part A · 定时任务：让 Hermes 自己动起来
+
+Hermes 内置的 `cronjob` 工具让 agent 能**自己排程**、自己跑。原理上跟 unix cron 类似，但**每次触发都是一次独立的 agent session**（自带工具、自带技能、自带记忆），不是纯脚本。
+
+### 三种创建方式
+
+<Steps>
+
+1. **自然语言（最省事）**
+
+   启动 Hermes，直接说：
+
+   ```
+   你：每天早上 9 点帮我扫一下 Hacker News，选出 3 条跟 AI 相关的，发到我的 Telegram。
+   ```
+
+   Hermes 会识别这是一个定时需求，调用 `cronjob(action="create", ...)`，然后告诉你：job ID、调度规则、下一次触发时间。
+
+2. **对话里 slash 命令**
+
+   ```
+   你：/cron add "0 9 * * *" "扫一下 HN，选 3 条 AI 新闻发到 Telegram"
+   ```
+
+   语法：`/cron add <schedule> "<prompt>"`。
+
+3. **终端 CLI**
+
+   ```bash
+   hermes cron create "0 9 * * *" "扫一下 HN，选 3 条 AI 新闻发到 Telegram"
+   ```
+
+</Steps>
+
+### schedule 格式
+
+全部支持：
+
+| 写法 | 含义 |
+|------|------|
+| `30m`、`2h`、`1d` | **相对延时，一次性**（30 分钟后跑一次） |
+| `every 30m`、`every 2h` | 每隔 N 分钟/小时/天循环 |
+| `0 9 * * *` | 标准 cron：每天 9 点 |
+| `0 */6 * * *` | 每 6 小时 |
+| `2026-05-01T09:00:00` | ISO 时间戳，特定时刻一次性 |
+
+### 管理定时任务
+
+```bash
+hermes cron list                      # 看所有 job
+hermes cron status <job_id>           # 看单个 job 详情 / 上次结果
+hermes cron edit <job_id> --schedule "0 10 * * *"
+hermes cron tick                      # 立刻检查一遍到期 job（调试用）
+```
+
+对话里：
+
+```
+/cron list
+/cron run <job_id>      # 立即触发一次，不等下次到期
+/cron pause <job_id>
+/cron resume <job_id>
+/cron remove <job_id>
+```
+
+### 结合 skill 执行
+
+让 cron 在运行前先加载一个 skill（Day 5 装的）：
+
+```
+你：每天早上 9 点用 blogwatcher skill 汇总我订阅的 RSS，发到 Telegram。
+```
+
+Hermes 会把 skill 作为 agent 的前置 prompt，再叠加这条任务——相当于把 Day 5 装的技能**放到无人值守的流程里跑**。
+
+<Aside type="caution" title="cron 不能套娃">
+  cron 任务里不能再创建 cron 任务，防止递归失控。想要 A 结束后触发 B 这种编排，用 skill 里描述顺序，或者用两条独立 cron 的时间差错开。
 </Aside>
 
-## 本章会做什么
+<Aside type="tip" title="不想被打扰就让它「沉默」">
+  如果某次任务没有值得汇报的结果，Hermes 的回复可以以 `[SILENT]` 开头，这样结果不会推送到 IM，但会进 `~/.hermes/cron/output/` 的审计日志。很适合"没异常就别吵我"的监控类任务。
+</Aside>
 
-（详细步骤待补充。）
+### 调度器是什么时候检查的
 
-## 验证成果
+Gateway（Day 3 你装的那个长驻进程）**每 60 秒**检查一次到期 job。**gateway 没跑，cron 不会触发**——所以要让 cron 真正生效，先确保：
 
-（本章完成后的可观察输出将列在这里。）
+```bash
+hermes gateway status      # 确保 gateway 在 running
+```
 
-## 资料来源
+---
 
-- Hermes Agent 官方文档：https://hermes-agent.nousresearch.com/docs/
+## Part B · 诊断三件套
+
+### `hermes doctor`——自动体检
+
+遇到任何奇怪的问题，**第一个该跑的命令**：
+
+```bash
+hermes doctor
+hermes doctor --fix        # 能自动修的就修掉
+```
+
+它会检查：Python / Node / 依赖版本、配置文件语法、数据库完整性、Provider 认证是否还有效、gateway 状态、skills 目录权限等。
+
+### `hermes status`——当前系统状态
+
+```bash
+hermes status              # 精简版
+hermes status --all        # 详细版（可贴到 issue 里，会自动脱敏）
+hermes status --deep       # 带主动探测（会发测试请求给 Provider，稍慢）
+```
+
+贴 issue 时用 `--all`——它会把 API Key 等敏感信息脱敏成 `sk-***`。
+
+### `hermes logs`——日志查询
+
+日志都在 `~/.hermes/logs/` 下。`hermes logs` 是查询入口：
+
+| 日志 | 里面是什么 |
+|------|----------|
+| `agent`（默认） | API 调用、工具派发、会话活动 |
+| `errors` | 只有 warning 和 error |
+| `gateway` | 平台连接、webhook 事件 |
+
+常用场景：
+
+```bash
+hermes logs -f                         # 实时跟（tail -f）
+hermes logs errors --since 1h          # 最近 1 小时的错误
+hermes logs --level WARNING --since 30m
+hermes logs gateway -n 100             # gateway 日志最后 100 行
+hermes logs --session 7e4f2b8c         # 某个会话的全部日志
+```
+
+**典型排查流程：**
+
+```
+现象：Telegram 机器人又不回复了
+
+1. hermes gateway status                  → 还活着吗？
+2. hermes status --deep                   → Telegram 认证是否失效？
+3. hermes logs gateway --since 30m -f     → 最近半小时 gateway 日志
+4. 若看到 401 → 重新 hermes gateway setup 更新 token
+5. 若看到 rate limit → 配置 fallback_model（Day 2 讲过）
+```
+
+---
+
+## 七天回顾
+
+到这里你应该已经：
+
+| Day | 能力 |
+|-----|------|
+| 1 | 本机跑 `hermes`，完成第一次对话 |
+| 2 | 挑了 Provider、配了 Key、发了推理题 |
+| 3 | 至少一个 IM（TG / DC / Slack）能 @机器人了 |
+| 4 | 用过 web_search、terminal 至少 2 个内置工具 |
+| 5 | 装了第一个 skill，对话里触发过它 ✨ |
+| 6 | 会看 `~/.hermes/memories/`、会 `/compress`、会 `hermes backup` |
+| 7 | 会写 cron 让 Hermes 自己动起来、会用 doctor/status/logs 三件套排查故障 |
+
+---
+
+## 下一步去哪
+
+7 天覆盖的是**最小闭环**。深入方向看你用法偏哪边：
+
+| 方向 | 去哪学 |
+|------|--------|
+| **从 OpenClaw 搬过来** | 本站的[「从 OpenClaw 搬家」](/migrate/from-openclaw/)迁移指南 |
+| **把 Hermes 嵌进自家软件** | [官方 Developer Guide](https://hermes-agent.nousresearch.com/docs/developer-guide/contributing) |
+| **写自己的 skill 给团队** | Day 5 进阶部分 + [agentskills.io 范例](https://agentskills.io/) |
+| **MCP 接入你自家内部服务** | [Use MCP with Hermes](https://hermes-agent.nousresearch.com/docs/guides/use-mcp-with-hermes) |
+| **语音交互 / 本地部署** | [Voice Mode](https://hermes-agent.nousresearch.com/docs/guides/use-voice-mode-with-hermes) / [Self-hosting](https://hermes-agent.nousresearch.com/docs/) |
+| **从头读文档再过一遍** | [官方 Learning Path](https://hermes-agent.nousresearch.com/docs/getting-started/learning-path) |
+
+本站以后会继续补：**「实战食谱」系列**（每篇聚焦一个具体工作流：代码 review agent、内容聚合机器人、运维值班助手……），跟本教程互补。
+
+---
+
+## 常见问题
+
+<Aside type="danger" title="cron 任务到点没跑">
+  99% 是 gateway 没起。检查：
+
+  ```bash
+  hermes gateway status
+  # 没在跑 → hermes gateway start
+  # status 说 running 但仍不触发 → hermes cron tick 看是否能手动触发
+  ```
+</Aside>
+
+<Aside type="danger" title="cron 触发了，但结果没发到 Telegram">
+  delivery channel 没配对。创建任务时指定：
+
+  ```
+  你：每天 9 点扫 HN，结果发到 telegram（不是 local）。
+  ```
+
+  或者编辑 job：`hermes cron edit <job_id> --channel telegram`。
+</Aside>
+
+<Aside type="danger" title="hermes doctor --fix 报「nothing to fix」但问题还在">
+  `--fix` 只能修它认识的问题。看最后几行 `hermes logs errors --since 1h`，把具体报错拿去 GitHub issue 或官方 Discord 问——附上 `hermes status --all` 的输出（自动脱敏）。
+</Aside>
+
+<Aside type="note" title="想把这个 Hermes 配置搬到另一台机器">
+  用 Day 6 的备份 + 恢复：
+
+  ```bash
+  # 原机器
+  hermes backup -o hermes-all.zip
+
+  # 新机器（Hermes 已安装）
+  hermes import hermes-all.zip
+  hermes gateway install && hermes gateway start
+  ```
+</Aside>
+
+<Aside type="note" title="自动化跑多了怎么省 token">
+  cron job 用 `fallback_model` 走便宜模型（Day 2 讲过的 fallback 机制），或在 skill 里加 `model: kimi-for-coding` 等覆写——让日常重复任务用便宜模型，关键对话走旗舰模型。
+</Aside>
