@@ -22,7 +22,7 @@ export default defineConfig({
 				ThemeSelect: './src/components/overrides/ThemeSelect.astro',
 			},
 			social: [
-				{ icon: 'github', label: 'GitHub', href: 'https://github.com/Hubery23' },
+				{ icon: 'github', label: 'GitHub', href: 'https://github.com/Hubery23/hermes-guide' },
 			],
 			sidebar: [
 				{
