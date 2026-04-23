@@ -17,9 +17,12 @@
 	--amber: #e8c547;
 }
 
-/* ===== 2. Starlight 变量覆盖（浅色模式） ===== */
+/* ===== 2. Starlight 变量覆盖（只支持浅色模式） ===== */
+/* [data-theme='dark'] 镜像浅色，确保系统深色偏好下也呈 H 工业浅色风 */
+/* 注：theme.css 在 @layer 外，优先级高于 Starlight 内置的分层规则 */
 :root,
-[data-theme='light'] {
+[data-theme='light'],
+[data-theme='dark'] {
 	--sl-color-bg: var(--sand);
 	--sl-color-bg-nav: var(--sand);
 	--sl-color-bg-sidebar: var(--paper);
@@ -29,7 +32,9 @@
 	--sl-color-accent-high: var(--ink);
 	--sl-color-accent-low: var(--amber);
 
-	--sl-color-white: var(--paper);
+	/* --sl-color-white 在 Starlight 中用于标题和 aside 文字颜色
+	   浅色模式下必须是深色，否则标题在沙色背景上几乎不可见 */
+	--sl-color-white: var(--ink);
 	--sl-color-gray-1: var(--ink-soft);
 	--sl-color-gray-2: var(--ink-soft);
 	--sl-color-gray-5: var(--sand-dark);
@@ -37,17 +42,13 @@
 	--sl-color-hairline: var(--ink);
 	--sl-color-hairline-light: var(--sand-dark);
 
+	/* inline code 背景用 sand-dark，比页面背景（sand）更深，提升识别度 */
+	--sl-color-bg-inline-code: var(--sand-dark);
+
 	--sl-font: var(--font-body);
 	--sl-font-system-mono: var(--font-mono);
-}
 
-/* 深色模式：暂不做独立 H 深色方案，回落到深墨底 */
-[data-theme='dark'] {
-	--sl-color-bg: var(--ink);
-	--sl-color-bg-sidebar: #1a1a1e;
-	--sl-color-text: var(--sand);
-	--sl-color-text-accent: var(--amber);
-	--sl-color-accent: var(--amber);
+	color-scheme: light;
 }
 
 /* ===== 3. 全局基础样式 ===== */

@@ -18,6 +18,9 @@ export default defineConfig({
 				en: { label: 'English', lang: 'en' },
 			},
 			customCss: ['./src/styles/fonts.css', './src/styles/theme.css'],
+			components: {
+				ThemeSelect: './src/components/overrides/ThemeSelect.astro',
+			},
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/Hubery23' },
 			],
