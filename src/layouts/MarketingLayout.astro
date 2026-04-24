@@ -3,6 +3,9 @@ import type { Locale } from '@lib/locale';
 import WarningStrip from '@components/WarningStrip.astro';
 import SiteNav from '@components/SiteNav.astro';
 import SiteFooter from '@components/SiteFooter.astro';
+import SEO from '@components/SEO.astro';
+import Schema from '@components/Schema.astro';
+import { websiteSchema, organizationSchema } from '@lib/schemas';
 import '@styles/fonts.css';
 import '@styles/theme.css';
 
@@ -10,8 +13,21 @@ interface Props {
 	locale: Locale;
 	title: string;
 	description?: string;
+	ogImage?: string;
+	ogType?: 'website' | 'article';
+	/** 页面级 JSON-LD（WebSite/Organization 已全站默认注入，无需重复）。 */
+	schema?: Record<string, unknown> | Record<string, unknown>[];
+	noindex?: boolean;
 }
-const { locale, title, description } = Astro.props;
+const {
+	locale,
+	title,
+	description = '',
+	ogImage,
+	ogType = 'website',
+	schema,
+	noindex = false,
+} = Astro.props;
 ---
 
 <!DOCTYPE html>
@@ -20,9 +36,28 @@ const { locale, title, description } = Astro.props;
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
 		<title>{title}</title>
-		{description && <meta name="description" content={description} />}
+		<meta name="description" content={description} />
+
+		<SEO
+			locale={locale}
+			title={title}
+			description={description}
+			ogImage={ogImage}
+			ogType={ogType}
+			noindex={noindex}
+		/>
+
+		{/* Favicon 家族 */}
 		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-		<link rel="canonical" href={`https://hermesagentguide.online${Astro.url.pathname}`} />
+		<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+		<link rel="manifest" href="/site.webmanifest" />
+		<meta name="theme-color" content="#e8e2d4" />
+
+		{/* 全站基础结构化数据 */}
+		<Schema schema={[websiteSchema(locale), organizationSchema(locale)]} />
+		{schema && <Schema schema={schema} />}
 	</head>
 	<body>
 		<WarningStrip locale={locale} pathname={Astro.url.pathname} />

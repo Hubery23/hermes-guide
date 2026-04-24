@@ -1,0 +1,10 @@
+---
+// 注入页面级 JSON-LD。传入任意 schema 对象，自动渲染为 <script type="application/ld+json">。
+interface Props {
+	schema: Record<string, unknown> | Record<string, unknown>[];
+}
+const { schema } = Astro.props;
+const json = JSON.stringify(schema);
+---
+
+<script is:inline type="application/ld+json" set:html={json} />

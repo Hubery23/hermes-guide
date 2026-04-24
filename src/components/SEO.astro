@@ -1,0 +1,59 @@
+---
+import { swapLocalePath, stripLocale, type Locale } from '@lib/locale';
+
+interface Props {
+	locale: Locale;
+	title: string;
+	description: string;
+	ogImage?: string;
+	ogType?: 'website' | 'article';
+	noindex?: boolean;
+}
+
+const {
+	locale,
+	title,
+	description,
+	ogImage = '/og/home.png',
+	ogType = 'website',
+	noindex = false,
+} = Astro.props;
+
+const SITE = 'https://hermesagentguide.online';
+const currentPath = Astro.url.pathname;
+const canonical = `${SITE}${currentPath}`;
+const zhHref = `${SITE}${swapLocalePath(currentPath, 'zh-CN')}`;
+const enHref = `${SITE}${swapLocalePath(currentPath, 'en')}`;
+const ogImageAbs = ogImage.startsWith('http') ? ogImage : `${SITE}${ogImage}`;
+const ogLocale = locale === 'zh-CN' ? 'zh_CN' : 'en_US';
+const ogLocaleAlt = locale === 'zh-CN' ? 'en_US' : 'zh_CN';
+---
+
+{/* Canonical */}
+<link rel="canonical" href={canonical} />
+
+{/* Hreflang：双语 + x-default */}
+<link rel="alternate" hreflang="zh-CN" href={zhHref} />
+<link rel="alternate" hreflang="en" href={enHref} />
+<link rel="alternate" hreflang="x-default" href={zhHref} />
+
+{/* Robots */}
+{noindex && <meta name="robots" content="noindex,follow" />}
+
+{/* Open Graph */}
+<meta property="og:type" content={ogType} />
+<meta property="og:site_name" content="Hermes Agent 中文指南" />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={ogImageAbs} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:locale" content={ogLocale} />
+<meta property="og:locale:alternate" content={ogLocaleAlt} />
+
+{/* Twitter Card */}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImageAbs} />
