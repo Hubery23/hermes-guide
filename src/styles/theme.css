@@ -42,6 +42,24 @@
 	--sl-color-hairline: var(--ink);
 	--sl-color-hairline-light: var(--sand-dark);
 
+	/* 强制使用 Starlight 亮色模式的 aside 调色板
+	   默认 :root 是暗色模式，aside 背景为深色（22% lightness），文字不可见 */
+	--sl-color-orange-high: hsl(41, 80%, 25%);
+	--sl-color-orange: hsl(41, 90%, 60%);
+	--sl-color-orange-low: hsl(41, 90%, 88%);
+	--sl-color-green-high: hsl(101, 80%, 22%);
+	--sl-color-green: hsl(101, 90%, 46%);
+	--sl-color-green-low: hsl(101, 85%, 90%);
+	--sl-color-blue-high: hsl(234, 80%, 30%);
+	--sl-color-blue: hsl(234, 90%, 60%);
+	--sl-color-blue-low: hsl(234, 88%, 90%);
+	--sl-color-purple-high: hsl(281, 90%, 30%);
+	--sl-color-purple: hsl(281, 90%, 60%);
+	--sl-color-purple-low: hsl(281, 80%, 90%);
+	--sl-color-red-high: hsl(339, 80%, 30%);
+	--sl-color-red: hsl(339, 90%, 60%);
+	--sl-color-red-low: hsl(339, 80%, 90%);
+
 	/* inline code 背景用 sand-dark，比页面背景（sand）更深，提升识别度 */
 	--sl-color-bg-inline-code: var(--sand-dark);
 
@@ -81,4 +99,15 @@ pre,
 /* 代码块边框协调 H 色板 */
 .expressive-code {
 	--ec-brdCol: var(--ink);
+}
+
+/* data-theme 实际值是 "dark"，但视觉强制浅色模式。
+   EC 的 span 内联了 --0（暗色 token）和 --1（亮色 token），
+   用 [data-theme='light'] 切换。这里直接覆盖，让 EC 始终用亮色 token。 */
+.expressive-code code span {
+	color: var(--1) !important;
+}
+/* 代码块背景用 paper，比页面 sand 略浅形成层次感 */
+.expressive-code pre {
+	background-color: var(--paper) !important;
 }
