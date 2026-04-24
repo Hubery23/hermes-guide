@@ -35,6 +35,9 @@
 	/* --sl-color-white 在 Starlight 中用于标题和 aside 文字颜色
 	   浅色模式下必须是深色，否则标题在沙色背景上几乎不可见 */
 	--sl-color-white: var(--ink);
+	/* --sl-color-black 在暗色模式下为近黑色（hsl(224,10%,10%)），
+	   搜索结果卡背景用它；覆盖为 paper 让卡片变亮色 */
+	--sl-color-black: var(--paper);
 	--sl-color-gray-1: var(--ink-soft);
 	--sl-color-gray-2: var(--ink-soft);
 	--sl-color-gray-5: var(--sand-dark);
@@ -110,4 +113,32 @@ pre,
 /* 代码块背景用 paper，比页面 sand 略浅形成层次感 */
 .expressive-code pre {
 	background-color: var(--paper) !important;
+}
+
+/* ===== 5. Pagefind 搜索 UI ===== */
+/* Starlight 把 --pagefind-ui-background 绑到 --sl-color-black，
+   data-theme="dark" 时为近黑色，导致搜索框和结果卡全部黑底。
+   直接覆盖所有 Pagefind 变量到 H 色板。 */
+#starlight__search {
+	--pagefind-ui-primary: var(--tang);
+	--pagefind-ui-text: var(--ink);
+	--pagefind-ui-background: var(--paper);
+	--pagefind-ui-border: var(--sand-dark);
+	--pagefind-ui-tag: var(--sand-dark);
+}
+#starlight__search .pagefind-ui__search-input {
+	color: var(--ink);
+	background-color: var(--sand);
+	border-color: var(--ink);
+}
+#starlight__search .pagefind-ui__form::before {
+	background-color: var(--ink) !important;
+}
+#starlight__search .pagefind-ui__result-link {
+	--pagefind-ui-text: var(--ink);
+	color: var(--ink);
+}
+#starlight__search mark {
+	color: var(--ink);
+	background-color: var(--amber);
 }
