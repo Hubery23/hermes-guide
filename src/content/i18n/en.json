@@ -6,8 +6,8 @@
   "nav.faq": "05 · FAQ",
   "nav.start": "Start",
   "hero.tag": "",
-  "hero.title.line1": "Self-Hosted Self-Evolving",
-  "hero.sub": "An AI butler that lives on your server — persistent memory, grows smarter with every conversation.",
+  "hero.title.line1": "Hermes Agent Tutorial",
+  "hero.sub": "A self-hosted AI butler that lives on your server — persistent memory, extensible skills, 100% open source.",
   "hero.cta.primary": "Begin Assembly",
   "hero.cta.ghost": "Read the Manual",
   "hero.stats.days": "7 Days",
@@ -45,5 +45,11 @@
   "footer.rss": "RSS (coming)",
   "coming_soon.title": "English version coming soon",
   "coming_soon.body": "The Chinese version is live. English translations welcome via PR.",
-  "coming_soon.cta": "Contribute on GitHub"
+  "coming_soon.cta": "Contribute on GitHub",
+  "meta.home.title": "Hermes Agent Tutorial · Self-Hosted AI Agent in 7 Days (from OpenClaw)",
+  "meta.home.description": "Community guide to Hermes Agent: deploy in 7 days, connect Telegram / Discord / Slack / WeChat, install skills, migrate from OpenClaw. Every command tested. 100% open-source MIT.",
+  "meta.migrate.title": "Migrate from OpenClaw to Hermes Agent · Concept Map + Full Walkthrough",
+  "meta.migrate.description": "Tested crosswalk from OpenClaw to Hermes Agent: skills, memory, toolsets, bot tokens. Complete hermes claw migrate walkthrough with common pitfalls.",
+  "meta.7days.title": "Hermes Agent 7-Day Tutorial · Master It in a Week",
+  "meta.7days.description": "From first install to scheduled tasks: 7-day Hermes Agent course covering model setup, messaging integrations, built-in tools, skills, memory, and diagnostics."
 }

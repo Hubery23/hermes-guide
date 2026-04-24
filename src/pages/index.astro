@@ -7,6 +7,7 @@ import DayCard from '@components/DayCard.astro';
 import CompatChart from '@components/CompatChart.astro';
 import { useT } from '@lib/i18n';
 import { compatPairs } from '@lib/data';
+import { courseSchema } from '@lib/schemas';
 
 const locale = 'zh-CN' as const;
 const t = useT(locale);
@@ -19,7 +20,7 @@ const heroAccent = _heroSpaceIdx > -1 ? _heroTitle.slice(_heroSpaceIdx + 1) : ''
 const days = [
 	{ day: 'DAY 01', titleZh: '跑起来：Hermes 的第一次对话', titleEn: 'Boot Up: Your First Chat', desc: '装好 Hermes Agent，完成第一次对话。', href: '/7-days/day-01/' },
 	{ day: 'DAY 02', titleZh: '挑个大脑：模型选型与 API 接入', titleEn: 'Pick a Brain: Model & API', desc: 'Claude / GPT / 本地模型怎么选；配 API key。', href: '/7-days/day-02/' },
-	{ day: 'DAY 03', titleZh: '入驻聊天室：微信 / Telegram / Discord / Slack', titleEn: 'Go Social', desc: '通过微信 / telegram 对话。', href: '/7-days/day-03/' },
+	{ day: 'DAY 03', titleZh: '入驻聊天室：微信 / Telegram / Discord / Slack', titleEn: 'Go Social', desc: '通过微信 / Telegram 对话。', href: '/7-days/day-03/' },
 	{ day: 'DAY 04', titleZh: '让 Agent 动手：内置工具实战', titleEn: 'Give It Hands', desc: '调用至少 2 个内置工具，开始实战。', href: '/7-days/day-04/' },
 	{ day: 'DAY 05', titleZh: '教它新本事：安装第一个 Skill', titleEn: 'Teach a Trick', desc: '从官方 Hub 装 skill，对话触发它。', milestone: true, href: '/7-days/day-05/' },
 	{ day: 'DAY 06', titleZh: '记忆与状态：会话、压缩、备份', titleEn: 'Memory & State', desc: '让 Agent 记住昨天聊过的内容。', href: '/7-days/day-06/' },
@@ -28,11 +29,17 @@ const days = [
 ];
 ---
 
-<MarketingLayout locale={locale} title={`Hermes Agent 中文指南 · ${t('site.tagline')}`} description={t('hero.sub')}>
+<MarketingLayout
+	locale={locale}
+	title={t('meta.home.title')}
+	description={t('meta.home.description')}
+	ogImage="/og/home.png"
+	schema={courseSchema(locale)}
+>
 	<section class="hero">
 		<div class="hero-l">
 			<div class="hero-id">
-				<div class="brand">HERMES</div>
+				<div class="brand" aria-hidden="true">HERMES</div>
 				<div class="meta">
 					{t('hero.tag') && <span class="tag">{t('hero.tag')}</span>}
 					<h1>{heroMain} <span class="title-accent">{heroAccent}</span></h1>
@@ -98,6 +105,8 @@ const days = [
 		pointer-events: none;
 		line-height: 0.8;
 		z-index: 0;
+		/* 装饰性伪元素：阻止其尺寸反向影响布局，避免 CLS */
+		contain: layout paint;
 	}
 	.hero-l, .hero-r { position: relative; z-index: 1; }
 	.hero-id { display: flex; align-items: baseline; gap: 22px; margin-bottom: 28px; }

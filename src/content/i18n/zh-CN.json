@@ -6,8 +6,8 @@
   "nav.faq": "05 · FAQ",
   "nav.start": "开始",
   "hero.tag": "",
-  "hero.title.line1": "自托管 自进化",
-  "hero.sub": "常驻服务器的 AI 管家，记忆持久化，越用越懂你。",
+  "hero.title.line1": "Hermes Agent 中文指南",
+  "hero.sub": "常驻服务器的 AI 管家：记忆持久化、Skills 可扩展、完全开源，越用越懂你。",
   "hero.cta.primary": "开始组装",
   "hero.cta.ghost": "阅读说明书",
   "hero.stats.days": "7 天",
@@ -45,5 +45,11 @@
   "footer.rss": "RSS（敬请期待）",
   "coming_soon.title": "本页英文版尚未完工",
   "coming_soon.body": "中文版已上线，英文翻译欢迎 PR 贡献。",
-  "coming_soon.cta": "到 GitHub 提交翻译"
+  "coming_soon.cta": "到 GitHub 提交翻译",
+  "meta.home.title": "Hermes Agent 中文教程｜7 天从零上手，OpenClaw 迁移指南",
+  "meta.home.description": "Hermes Agent 中文入门指南：7 天手把手部署、接入 Telegram / 微信 / Discord / Slack、安装 Skills 与从 OpenClaw 迁移。全程亲测可复现，100% 开源 MIT。",
+  "meta.migrate.title": "从 OpenClaw 迁移到 Hermes Agent ｜ 映射表 + 完整步骤",
+  "meta.migrate.description": "OpenClaw 与 Hermes Agent 概念一一对应。亲测过的迁移映射表：Skills / 记忆 / 工具链 / Bot 配置一键搬家，含 hermes claw migrate 命令详解。",
+  "meta.7days.title": "Hermes Agent 七日入门教程 · 每天 30 分钟，7 天精通",
+  "meta.7days.description": "从装机到定时任务，7 天打通 Hermes Agent 全流程：模型选型、IM 接入、内置工具、Skills、记忆、故障排查。每章一小时内完成，Mac / Linux / WSL 通用。"
 }

@@ -7,6 +7,7 @@ import DayCard from '@components/DayCard.astro';
 import CompatChart from '@components/CompatChart.astro';
 import { useT } from '@lib/i18n';
 import { compatPairs } from '@lib/data';
+import { courseSchema } from '@lib/schemas';
 
 const locale = 'en' as const;
 const t = useT(locale);
@@ -28,11 +29,17 @@ const days = [
 ];
 ---
 
-<MarketingLayout locale={locale} title={`Hermes Agent Guide · ${t('site.tagline')}`} description={t('hero.sub')}>
+<MarketingLayout
+	locale={locale}
+	title={t('meta.home.title')}
+	description={t('meta.home.description')}
+	ogImage="/og/home.png"
+	schema={courseSchema(locale)}
+>
 	<section class="hero">
 		<div class="hero-l">
 			<div class="hero-id">
-				<div class="brand">HERMES</div>
+				<div class="brand" aria-hidden="true">HERMES</div>
 				<div class="meta">
 					{t('hero.tag') && <span class="tag">{t('hero.tag')}</span>}
 					<h1>{heroMain} <span class="title-accent">{heroAccent}</span></h1>
@@ -98,6 +105,8 @@ const days = [
 		pointer-events: none;
 		line-height: 0.8;
 		z-index: 0;
+		/* 装饰性伪元素：阻止其尺寸反向影响布局，避免 CLS */
+		contain: layout paint;
 	}
 	.hero-l, .hero-r { position: relative; z-index: 1; }
 	.hero-id { display: flex; align-items: baseline; gap: 22px; margin-bottom: 28px; }

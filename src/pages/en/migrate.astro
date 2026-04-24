@@ -4,11 +4,24 @@ import SectionHead from '@components/SectionHead.astro';
 import CompatChart from '@components/CompatChart.astro';
 import MarqueeDivider from '@components/MarqueeDivider.astro';
 import { compatPairs } from '@lib/data';
+import { useT } from '@lib/i18n';
+import { breadcrumbSchema } from '@lib/schemas';
 
 const locale = 'en' as const;
+const t = useT(locale);
+const schema = breadcrumbSchema([
+	{ name: 'Hermes Agent Guide', path: '/en/' },
+	{ name: 'Migrate', path: '/en/migrate/' },
+]);
 ---
 
-<MarketingLayout locale={locale} title="Leaving OpenClaw · Migrate to Hermes Agent" description="A tested crosswalk from OpenClaw to Hermes Agent concepts.">
+<MarketingLayout
+	locale={locale}
+	title={t('meta.migrate.title')}
+	description={t('meta.migrate.description')}
+	ogImage="/og/migrate.png"
+	schema={schema}
+>
 	<section class="intro">
 		<div class="intro-inner">
 			<div class="big">H/01.08</div>

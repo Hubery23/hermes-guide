@@ -3,8 +3,11 @@ import MarketingLayout from '@layouts/MarketingLayout.astro';
 import SectionHead from '@components/SectionHead.astro';
 import DayCard from '@components/DayCard.astro';
 import MarqueeDivider from '@components/MarqueeDivider.astro';
+import { useT } from '@lib/i18n';
+import { courseSchema } from '@lib/schemas';
 
 const locale = 'en' as const;
+const t = useT(locale);
 const days = [
 	{ day: 'DAY 01', titleZh: '跑起来：Hermes 的第一次对话', titleEn: 'Boot Up', desc: 'Install and complete your first chat.', href: '/en/7-days/day-01/' },
 	{ day: 'DAY 02', titleZh: '挑个大脑：模型选型与 API 接入', titleEn: 'Pick a Brain', desc: 'Configure LLM and keys.', href: '/en/7-days/day-02/' },
@@ -17,7 +20,13 @@ const days = [
 ];
 ---
 
-<MarketingLayout locale={locale} title="7-Day Tutorial · Hermes Agent Guide" description="One module per day, each under an hour.">
+<MarketingLayout
+	locale={locale}
+	title={t('meta.7days.title')}
+	description={t('meta.7days.description')}
+	ogImage="/og/course.png"
+	schema={courseSchema(locale)}
+>
 	<section class="intro">
 		<div class="big">H/01</div>
 		<h1>7-Day Assembly</h1>
