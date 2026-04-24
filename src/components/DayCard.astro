@@ -1,6 +1,6 @@
 ---
 interface Props {
-	num: string;
+	num?: string;
 	day: string;
 	titleZh: string;
 	titleEn: string;
@@ -12,7 +12,7 @@ const { num, day, titleZh, titleEn, desc, milestone = false, href } = Astro.prop
 ---
 <a class:list={['day', { highlight: milestone }]} href={href}>
 	{milestone && <span class="tape">★ MILESTONE</span>}
-	<div class="d-num">{num}</div>
+	{num && <div class="d-num">{num}</div>}
 	<div class="d-title-zh">{titleZh}</div>
 	<div class="d-title-en">{titleEn}</div>
 	<p class="d-desc">{desc}</p>

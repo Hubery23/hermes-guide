@@ -6,8 +6,9 @@ interface Props {
 	toLabel: string;
 	fromTitle: string;
 	toTitle: string;
+	arrowHref?: string;
 }
-const { pairs, fromLabel, toLabel, fromTitle, toTitle } = Astro.props;
+const { pairs, fromLabel, toLabel, fromTitle, toTitle, arrowHref } = Astro.props;
 ---
 <div class="migration-grid">
 	<div class="mig-col">
@@ -17,7 +18,10 @@ const { pairs, fromLabel, toLabel, fromTitle, toTitle } = Astro.props;
 			{pairs.map(p => <li><span>{p.from}</span><span class="mono">{p.fromMeta}</span></li>)}
 		</ul>
 	</div>
-	<div class="mig-arrow">→</div>
+	{arrowHref
+		? <a href={arrowHref} class="mig-arrow" title="查看完整迁移指南">→</a>
+		: <div class="mig-arrow">→</div>
+	}
 	<div class="mig-col target">
 		<div class="mig-lab">{toLabel}</div>
 		<h3>{toTitle}</h3>
@@ -54,8 +58,10 @@ const { pairs, fromLabel, toLabel, fromTitle, toTitle } = Astro.props;
 		background: var(--tang); display: flex;
 		align-items: center; justify-content: center;
 		font-family: var(--font-display); font-size: 40px; font-weight: 800;
-		color: var(--ink);
+		color: var(--ink); text-decoration: none; cursor: default;
 	}
+	a.mig-arrow { cursor: pointer; transition: background 0.15s; }
+	a.mig-arrow:hover { background: var(--amber); }
 	@media (max-width: 760px) {
 		.migration-grid { grid-template-columns: 1fr; }
 		.mig-arrow { padding: 18px; font-size: 28px; }

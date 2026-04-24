@@ -1,20 +1,37 @@
 ---
+import type { Locale } from '@lib/locale';
+interface Props { locale?: Locale; }
+const { locale } = Astro.props;
+const isZh = locale !== 'en';
 ---
 <div class="divider">
-	<span>● SKILL</span><span class="sep">/</span>
-	<span>◉ INSTALL</span><span class="sep">/</span>
-	<span>▲ MEMORY</span><span class="sep">/</span>
-	<span>■ SCHEDULE</span><span class="sep">/</span>
-	<span>◆ MIGRATE</span><span class="sep">/</span>
-	<span>● MCP</span>
+	{isZh ? (
+		<>
+			<span>◉ 安装 INSTALL</span><span class="sep">/</span>
+			<span>● API</span><span class="sep">/</span>
+			<span>▲ 技能 SKILL</span><span class="sep">/</span>
+			<span>■ 记忆 MEMORY</span><span class="sep">/</span>
+			<span>◆ 自动化 SCHEDULE</span><span class="sep">/</span>
+			<span>● 迁移 MIGRATE</span>
+		</>
+	) : (
+		<>
+			<span>◉ INSTALL</span><span class="sep">/</span>
+			<span>● API</span><span class="sep">/</span>
+			<span>▲ SKILL</span><span class="sep">/</span>
+			<span>■ MEMORY</span><span class="sep">/</span>
+			<span>◆ SCHEDULE</span><span class="sep">/</span>
+			<span>● MIGRATE</span>
+		</>
+	)}
 </div>
 <style>
 	.divider {
 		background: var(--ink); color: var(--sand);
-		padding: 14px 32px; display: flex; gap: 20px;
+		padding: 14px 32px; display: flex; gap: 14px;
 		overflow: hidden; white-space: nowrap;
 		font-family: var(--font-mono);
-		font-size: 13px; letter-spacing: 4px; font-weight: 700;
+		font-size: 11px; letter-spacing: 3px; font-weight: 700;
 		text-transform: uppercase;
 	}
 	.sep { color: var(--tang); }
