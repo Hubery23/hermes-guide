@@ -12,7 +12,7 @@ const lp = (p: string) => swapLocalePath(p, locale);
 
 <nav class="nav">
 	<a href={lp('/')} class="logo">
-		Hermes<span class="slash">/</span>Agent
+		Hermes Agent
 	</a>
 	<ul>
 		<li><a href={lp('/#install')}>{t('nav.install')}</a></li>
@@ -40,7 +40,6 @@ const lp = (p: string) => swapLocalePath(p, locale);
 		color: var(--ink);
 		text-decoration: none;
 	}
-	.slash { color: var(--tang); }
 	ul {
 		list-style: none;
 		display: flex;

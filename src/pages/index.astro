@@ -11,12 +11,17 @@ import { compatPairs } from '@lib/data';
 const locale = 'zh-CN' as const;
 const t = useT(locale);
 
+const _heroTitle = t('hero.title.line1');
+const _heroSpaceIdx = _heroTitle.lastIndexOf(' ');
+const heroMain = _heroSpaceIdx > -1 ? _heroTitle.slice(0, _heroSpaceIdx) : _heroTitle;
+const heroAccent = _heroSpaceIdx > -1 ? _heroTitle.slice(_heroSpaceIdx + 1) : '';
+
 const days = [
-	{ day: 'DAY 01', titleZh: '跑起来：Hermes 的第一次对话', titleEn: 'Boot Up: Your First Chat', desc: '装好本体、开好环境变量，完成第一次对话。', href: '/7-days/day-01/' },
+	{ day: 'DAY 01', titleZh: '跑起来：Hermes 的第一次对话', titleEn: 'Boot Up: Your First Chat', desc: '装好 Hermes Agent，完成第一次对话。', href: '/7-days/day-01/' },
 	{ day: 'DAY 02', titleZh: '挑个大脑：模型选型与 API 接入', titleEn: 'Pick a Brain: Model & API', desc: 'Claude / GPT / 本地模型怎么选；配 API key。', href: '/7-days/day-02/' },
-	{ day: 'DAY 03', titleZh: '入驻聊天室：微信 / Telegram / Discord / Slack', titleEn: 'Go Social', desc: '微信扫码 / BotFather 发 token、收紧 allowlist、让 Hermes 在群里说话。', href: '/7-days/day-03/' },
-	{ day: 'DAY 04', titleZh: '让 Agent 动手：内置工具实战', titleEn: 'Give It Hands', desc: '调用至少 2 个内置工具，看到真实副作用。', href: '/7-days/day-04/' },
-	{ day: 'DAY 05', titleZh: '教它新本事：安装第一个 Skill', titleEn: 'Teach a Trick', desc: '从官方 hub 装 skill，对话触发它。', milestone: true, href: '/7-days/day-05/' },
+	{ day: 'DAY 03', titleZh: '入驻聊天室：微信 / Telegram / Discord / Slack', titleEn: 'Go Social', desc: '通过微信 / telegram 对话。', href: '/7-days/day-03/' },
+	{ day: 'DAY 04', titleZh: '让 Agent 动手：内置工具实战', titleEn: 'Give It Hands', desc: '调用至少 2 个内置工具，开始实战。', href: '/7-days/day-04/' },
+	{ day: 'DAY 05', titleZh: '教它新本事：安装第一个 Skill', titleEn: 'Teach a Trick', desc: '从官方 Hub 装 skill，对话触发它。', milestone: true, href: '/7-days/day-05/' },
 	{ day: 'DAY 06', titleZh: '记忆与状态：会话、压缩、备份', titleEn: 'Memory & State', desc: '让 Agent 记住昨天聊过的内容。', href: '/7-days/day-06/' },
 	{ day: 'DAY 07', titleZh: '全自动化：定时任务与故障排查', titleEn: 'Full Auto', desc: '自然语言写 cron；日志定位典型错误。', href: '/7-days/day-07/' },
 	{ day: 'BONUS', titleZh: '从 OpenClaw 搬家：平滑迁移指南', titleEn: 'Leaving OpenClaw', desc: '亲测过的映射表，搬运 skills 与记忆。', href: '/migrate/' },
@@ -29,8 +34,8 @@ const days = [
 			<div class="hero-id">
 				<div class="brand">HERMES</div>
 				<div class="meta">
-					<span class="tag">{t('hero.tag')}</span>
-					<h1>{t('hero.title.line1')}<br />{t('hero.title.line2')}</h1>
+					{t('hero.tag') && <span class="tag">{t('hero.tag')}</span>}
+					<h1>{heroMain} <span class="title-accent">{heroAccent}</span></h1>
 				</div>
 			</div>
 			<p class="hero-sub">{t('hero.sub')}</p>
@@ -118,12 +123,13 @@ const days = [
 	}
 	.hero-id h1 {
 		font-family: var(--font-display);
-		font-size: 36px;
+		font-size: 28px;
 		font-weight: 700;
 		letter-spacing: -1px;
 		line-height: 1.05;
 		margin: 0;
 	}
+	.title-accent { color: var(--tang); }
 	.hero-sub {
 		font-family: var(--font-display);
 		font-size: 22px;

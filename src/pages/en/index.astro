@@ -11,6 +11,11 @@ import { compatPairs } from '@lib/data';
 const locale = 'en' as const;
 const t = useT(locale);
 
+const _heroTitle = t('hero.title.line1');
+const _heroSpaceIdx = _heroTitle.lastIndexOf(' ');
+const heroMain = _heroSpaceIdx > -1 ? _heroTitle.slice(0, _heroSpaceIdx) : _heroTitle;
+const heroAccent = _heroSpaceIdx > -1 ? _heroTitle.slice(_heroSpaceIdx + 1) : '';
+
 const days = [
 	{ day: 'DAY 01', titleZh: '跑起来：Hermes 的第一次对话', titleEn: 'Boot Up: Your First Chat', desc: 'Install, set env vars, complete your first chat.', href: '/en/7-days/day-01/' },
 	{ day: 'DAY 02', titleZh: '挑个大脑：模型选型与 API 接入', titleEn: 'Pick a Brain: Model & API', desc: 'Choose Claude / GPT / local; configure API keys.', href: '/en/7-days/day-02/' },
@@ -29,8 +34,8 @@ const days = [
 			<div class="hero-id">
 				<div class="brand">HERMES</div>
 				<div class="meta">
-					<span class="tag">{t('hero.tag')}</span>
-					<h1>{t('hero.title.line1')}<br />{t('hero.title.line2')}</h1>
+					{t('hero.tag') && <span class="tag">{t('hero.tag')}</span>}
+					<h1>{heroMain} <span class="title-accent">{heroAccent}</span></h1>
 				</div>
 			</div>
 			<p class="hero-sub">{t('hero.sub')}</p>
@@ -118,12 +123,13 @@ const days = [
 	}
 	.hero-id h1 {
 		font-family: var(--font-display);
-		font-size: 36px;
+		font-size: 28px;
 		font-weight: 700;
 		letter-spacing: -1px;
 		line-height: 1.05;
 		margin: 0;
 	}
+	.title-accent { color: var(--tang); }
 	.hero-sub {
 		font-family: var(--font-display);
 		font-size: 22px;
