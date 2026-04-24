@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# 尚未完工的英文 stub 章节禁止抓取
+Disallow: /en/7-days/day-01/
+Disallow: /en/7-days/day-02/
+Disallow: /en/7-days/day-03/
+Disallow: /en/7-days/day-04/
+Disallow: /en/7-days/day-05/
+Disallow: /en/7-days/day-06/
+Disallow: /en/7-days/day-07/
+Disallow: /en/migrate/from-openclaw/
+
+Sitemap: https://hermesagentguide.online/sitemap-index.xml
