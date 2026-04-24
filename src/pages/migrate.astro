@@ -21,13 +21,16 @@ const locale = 'zh-CN' as const;
 	<MarqueeDivider />
 
 	<section class="sheet">
-		<SectionHead num="A.02" title="兼容性对照表" en="COMPATIBILITY SHEET" desc="本表基于 OpenClaw 2026-Q1 和 Hermes Agent v0.4 文档整理，作者于 2026-04 亲测。" />
+		<SectionHead num="A.02" title="兼容性对照表" en="COMPATIBILITY SHEET" />
 		<CompatChart pairs={compatPairs} fromLabel="[ FROM ]" toLabel="[ TO · HERMES ]" fromTitle="OpenClaw" toTitle="Hermes Agent" />
 	</section>
 
-	<section class="stub">
+	<section class="steps">
 		<SectionHead num="A.03" title="详细迁移步骤" en="STEP-BY-STEP" />
-		<p class="coming">📦 详细迁移教程正在撰写中，敬请期待。期间欢迎在 <a href="https://github.com/Hubery23/hermes-guide">GitHub</a> 提 issue 或 PR。</p>
+		<div class="steps-inner">
+			<p class="lede">一条 <code>hermes claw migrate</code> 搞定 SOUL.md、skills、配置、API Key、平台 token。完整指南带概念映射、手动重建清单和常见踩坑。</p>
+			<a href="/migrate/from-openclaw/" class="btn btn-primary">◉ 阅读完整迁移指南</a>
+		</div>
 	</section>
 </MarketingLayout>
 
@@ -58,10 +61,23 @@ const locale = 'zh-CN' as const;
 		max-width: 560px;
 		margin-bottom: 28px;
 	}
-	.sheet, .stub { padding: 80px 32px; border-bottom: 1px solid var(--ink); }
-	.stub { background: var(--paper); }
-	.coming { font-family: var(--font-mono); font-size: 14px; letter-spacing: 1px; color: var(--ink-soft); }
-	.coming a { color: var(--tang); }
+	.sheet, .steps { padding: 80px 32px; border-bottom: 1px solid var(--ink); }
+	.steps { background: var(--paper); }
+	.steps-inner { max-width: 720px; }
+	.steps .lede {
+		font-family: var(--font-display);
+		font-size: 20px;
+		line-height: 1.45;
+		color: var(--ink);
+		margin: 0 0 28px;
+	}
+	.steps .lede code {
+		font-family: var(--font-mono);
+		font-size: 15px;
+		background: var(--sand);
+		padding: 2px 8px;
+		border: 1px solid var(--ink);
+	}
 	@media (max-width: 760px) {
 		.big { font-size: 72px; }
 		h1 { font-size: 32px; }
