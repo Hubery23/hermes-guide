@@ -1,12 +1,16 @@
 ---
-title: "Day 3 · 入驻聊天室：Telegram / Discord / Slack"
-description: "让 Hermes 在你常用的 IM 里说话。主线走 Telegram，Discord / Slack 给清单。"
+title: "Day 3 · 入驻聊天室：微信 / Telegram / Discord / Slack"
+description: "让 Hermes 在你常用的 IM 里说话。国内主线走微信，海外主线走 Telegram，Discord / Slack 给清单。"
 day: 3
-duration: "30 分钟"
+duration: "30–45 分钟"
 milestone: false
 sources:
   - title: "Hermes Agent · Messaging Gateway"
     url: "https://hermes-agent.nousresearch.com/docs/user-guide/messaging"
+  - title: "Hermes Agent · Weixin（微信）"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/weixin"
+  - title: "Hermes Agent · WeCom（企业微信）"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/wecom"
   - title: "Hermes Agent · Telegram"
     url: "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/telegram"
   - title: "Hermes Agent · Discord"
@@ -19,14 +23,21 @@ import { Aside, Steps } from '@astrojs/starlight/components';
 
 ## 今日目标
 
-在你最常用的 IM（Telegram / Discord / Slack 三选一）里 @Hermes，它能回复。
+让 Hermes 出现在你**每天都在用**的 IM 里——国内大概率是**微信**，海外多半是 **Telegram**。今天完成任一条主线，就能在手机上 @ Hermes 并收到回复。
 
 ---
 
 ## 前置条件
 
 - 已完成 Day 2，`hermes` 能在终端正常对话
-- 你选好了一个平台：**没特殊偏好就选 Telegram**——BotFather 一条命令就能拿到 token，门槛最低
+- 选好**一个**平台起步。拿不定主意的话：
+  - **日常用微信** → 走主线一（微信）
+  - **喜欢折腾 / 想最低门槛** → 走主线二（Telegram）
+  - Discord / Slack 往下翻「分支」章节
+
+<Aside type="caution" title="一次只接一个，跑通再加第二个">
+  Gateway 支持同时接多个平台，但**新手先单通道跑通**。出问题才知道是通道本身、凭证还是白名单的锅。
+</Aside>
 
 ---
 
@@ -36,9 +47,10 @@ Hermes 在 IM 里说话靠的是 **messaging gateway**——一个独立于 `her
 
 ```
 ┌──────────────┐     ┌────────────────────┐     ┌────────────┐
-│ Telegram /   │ ←→ │ hermes gateway     │ ←→ │ Hermes     │
-│ Discord /    │     │ （长驻进程）        │     │ 核心（LLM）│
-│ Slack ...    │     └────────────────────┘     └────────────┘
+│ 微信 /       │ ←→ │ hermes gateway     │ ←→ │ Hermes     │
+│ Telegram /   │     │ （长驻进程）        │     │ 核心（LLM）│
+│ Discord /    │     └────────────────────┘     └────────────┘
+│ Slack ...    │
 └──────────────┘
 ```
 
@@ -53,7 +65,142 @@ Hermes 在 IM 里说话靠的是 **messaging gateway**——一个独立于 `her
 
 ---
 
-## 主线：Telegram（30 分钟）
+## 主线一：微信（国内首选 · 30–45 分钟）
+
+<Aside type="note" title="这一套走的是 iLink Bot 长轮询">
+  官方微信适配器底层走的是 **iLink Bot API + HTTP 长轮询**（35 秒超时）。不需要公网 IP、不需要 webhook、不需要内网穿透——家里的 MacBook / 云服务器都能直接跑。凭证绑的是**个人微信号**（小号也行），企业微信请看后面 [WeCom 一节](#企业微信-wecom简介)。
+</Aside>
+
+### Step 1：装依赖
+
+微信适配器多了两个 Python 库，先装上：
+
+```bash
+pip install aiohttp cryptography
+# 想让终端里直接画出二维码（推荐）：
+pip install "hermes-agent[messaging]"
+```
+
+### Step 2：跑配置向导，扫码登录
+
+```bash
+hermes gateway setup
+```
+
+向导会让你选平台——选 **Weixin**。然后：
+
+<Steps>
+
+1. 终端里会显示一张二维码（如果装了 `hermes-agent[messaging]`），或给你一个图片路径
+2. 用**手机微信扫一扫**这张二维码
+3. 手机上点「确认登录」
+4. 向导自动把 `account_id`、`token`、`base_url` 写入 `~/.hermes/.env`，凭证本体落在 `~/.hermes/weixin/accounts/` 目录里（这些是明文，别上传到 Git）
+
+</Steps>
+
+向导跑完后，`.env` 里会长这样：
+
+```bash
+WEIXIN_ACCOUNT_ID=xxxxxxxx
+WEIXIN_TOKEN=xxxxxxxxxxxxxxxxxxxxxx
+WEIXIN_DM_POLICY=pairing
+WEIXIN_HOME_CHANNEL=              # 想发主动通知时填
+```
+
+<Aside type="tip" title="建议用一个小号，不要用主号">
+  iLink Bot 是基于个人微信号运行的。官方建议**新开一个微信小号**做机器人——原因：① 主号被风控会影响日常社交；② 机器人在群里的发言频率不可控，小号出问题损失低。
+</Aside>
+
+### Step 3：收紧访问策略
+
+首次登录默认 `dm_policy=pairing`（谁都可以发消息进来走配对流程）。日常使用应该改成 `allowlist`，只让自己和指定的人能聊：
+
+```bash
+# ~/.hermes/.env
+WEIXIN_DM_POLICY=allowlist
+WEIXIN_ALLOWED_USERS=wxid_xxxxxxxxxxxx    # 你自己微信号的 wxid
+```
+
+不知道自己 `wxid` 怎么拿？**先启动 gateway 自己给机器人发一条消息**，日志里会打印出发件人的 wxid，复制下来填回来就行。
+
+<Aside type="caution" title="群聊默认是关闭的">
+  `group_policy` **默认 `disabled`**——这是刻意设计，个人微信在群里高频发言极易被风控。如果你确实要在某个群里让机器人响应，再手动放开：
+
+  ```bash
+  WEIXIN_GROUP_POLICY=allowlist
+  WEIXIN_ALLOWED_GROUPS=<群 ID>   # 启动后看日志抓
+  ```
+</Aside>
+
+### Step 4：启动 Gateway
+
+```bash
+hermes gateway
+```
+
+看到类似下面的日志说明通了：
+
+```
+gateway online · weixin connected · account=xxxx · long-poll=35s
+```
+
+### Step 5：在微信里对话
+
+手机微信打开你机器人那个号（或进入你和它的私聊），发一条：
+
+```
+你好，现在几点？
+```
+
+正常情况下机器人会回复当前时间。如果没反应——先去看「常见问题」章节里的微信部分。
+
+### Step 6：装成后台服务（推荐）
+
+前台跑只适合测试。要 7×24 在线：
+
+```bash
+hermes gateway install
+hermes gateway start
+hermes gateway status
+```
+
+---
+
+### 微信媒体与消息限制
+
+| 能力 | 说明 |
+|------|------|
+| 图片 / 视频 / 文件 / 语音 | 都支持。Tencent CDN 里的加密（AES-128-ECB）gateway 自动帮你解 |
+| 单条消息长度 | 最多 **4000 字符**，超出会在合理位置自动拆成多条 |
+| Markdown 链接 | gateway 会把 `[文字](url)` 渲染成微信可点的引用卡片 |
+| 主动推送 | 设置 `WEIXIN_HOME_CHANNEL` 后，cron 或定时任务可以往这个对话推消息 |
+
+---
+
+### 企业微信（WeCom）简介
+
+如果你要接的是**企业微信**（WeCom），而不是个人微信，走的是**另一条路**——
+
+| 维度 | 个人微信（Weixin） | 企业微信（WeCom） |
+|------|-------------------|-------------------|
+| 适配器 | `weixin`（iLink Bot） | `wecom` |
+| 传输 | HTTP 长轮询 | **WebSocket 长连接** |
+| 凭证 | 扫码登录，token 有状态 | 管理后台创建 AI Bot，拿 `BOT_ID` / `SECRET` |
+| 群聊默认 | `disabled` | `open`（企业场景天然需要） |
+| 加密 | AES-128-ECB | AES-256-CBC |
+
+启动方式一样是 `hermes gateway setup` 选 WeCom。`.env` 里换成：
+
+```bash
+WECOM_BOT_ID=your-bot-id
+WECOM_SECRET=your-secret
+```
+
+完整流程见官方 [WeCom 文档](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/wecom)，这里不展开。
+
+---
+
+## 主线二：Telegram（30 分钟）
 
 <Steps>
 
@@ -112,22 +259,11 @@ Hermes 在 IM 里说话靠的是 **messaging gateway**——一个独立于 `her
 
 6. **把 Gateway 装成后台服务（可选但推荐）**
 
-   前台跑只适合测试。要让机器人 7×24 在线：
-
-   ```bash
-   # 用户级服务（macOS launchd / Linux systemd --user）
-   hermes gateway install
-   hermes gateway start
-   hermes gateway status
-   ```
-
-   之后 `hermes gateway start/stop/status` 就是你管理它的三个命令。
+   命令与微信主线 Step 6 完全相同：`hermes gateway install && hermes gateway start`。
 
 </Steps>
 
----
-
-## 群聊里：privacy mode 和 @mention
+### Telegram 群聊：privacy mode 和 @mention
 
 把机器人加到群里后，默认会**看不见**大部分消息——这是 Telegram 的 privacy mode：机器人只能看到 `/` 开头的命令、直接回复它的消息、以及 @机器人 的消息。
 
@@ -214,10 +350,13 @@ SLACK_ALLOWED_USERS=U01XXXXX   # Slack user ID，不是用户名
 ```
 $ hermes gateway status
 ● gateway:  running
-● telegram: connected
+● weixin:   connected     # 或 telegram / discord / slack
 ● session:  ready
+```
 
-# 在 Telegram / Discord / Slack 里：
+然后在对应的 IM 里：
+
+```
 你：@Hermes 9.8 和 9.11 哪个大？
 Hermes：9.8 比 9.11 大。9.8 = 9.80，而 9.11 = 9.11，所以 9.80 > 9.11。
 ```
@@ -230,7 +369,31 @@ Hermes：9.8 比 9.11 大。9.8 = 9.80，而 9.11 = 9.11，所以 9.80 > 9.11。
   1. `hermes gateway status` — 进程是否还活着
   2. `hermes gateway` 前台重启，看启动日志有没有报错
   3. 检查 token 是否正确（`.env` 里有没有多空格、引号）
-  4. 检查自己的 user ID 是否在 `*_ALLOWED_USERS` 里
+  4. 检查自己的 user ID / wxid 是否在 `*_ALLOWED_USERS` 里
+</Aside>
+
+<Aside type="danger" title="微信：errcode=-14 / session 过期">
+  iLink 的会话凭证有寿命，长时间不用或手机端被挤下线都会触发 `errcode=-14`。解决方式：
+
+  ```bash
+  hermes gateway stop
+  hermes gateway setup    # 重新扫码
+  hermes gateway start
+  ```
+
+  凭证文件在 `~/.hermes/weixin/accounts/`，重扫后旧的会被覆盖，无需手动清理。
+</Aside>
+
+<Aside type="danger" title="微信：二维码刷新了 3 次还是没扫上">
+  向导里的二维码默认最多自动刷新 3 次（每张大约 2 分钟）。超时后 `Ctrl+C` 退出，重开 `hermes gateway setup` 就行。通常是因为手机离电脑太远 / 终端二维码太小——装上 `hermes-agent[messaging]` 直接在终端画矢量二维码会清楚很多。
+</Aside>
+
+<Aside type="danger" title="微信：同一个账号不能两端同时跑 gateway">
+  一个微信凭证对应一个 iLink 会话。如果你在台式机和笔记本上用同一个号同时启动 gateway，两边会互踢。要么拆成两个微信号（推荐），要么用 `hermes gateway stop` 先停掉一边。
+</Aside>
+
+<Aside type="caution" title="微信：群里 @ 了机器人没反应">
+  99% 是 `WEIXIN_GROUP_POLICY=disabled`（默认值）。配置方式见上方 **Step 3「群聊默认是关闭的」**——启动 gateway 后在群里发一条消息，从日志里抓 `chat_id` 填进去即可。
 </Aside>
 
 <Aside type="danger" title="Discord：收到消息但 Hermes 看不到内容">
@@ -249,18 +412,19 @@ Hermes：9.8 比 9.11 大。9.8 = 9.80，而 9.11 = 9.11，所以 9.80 > 9.11。
   这是 gateway 的内置保护：不在 allowlist 里的用户发消息，机器人不会回，但会给你这个管理员一个配对码。审批命令：
 
   ```bash
-  hermes pairing approve telegram ABC123
+  hermes pairing approve weixin ABC123       # 或 telegram / discord / slack
   ```
 
   配对码 1 小时过期。不想要这个机制可以在 `.env` 设 `GATEWAY_ALLOW_ALL_USERS=true`——**但机器人有终端访问权，开放给所有人风险很大**，除非你知道自己在做什么。
 </Aside>
 
 <Aside type="note" title="会话状态什么时候重置？">
-  默认规则：空闲超过一定时长（Telegram 240 分钟、Discord 60 分钟）或到每日固定时间（默认凌晨 4 点）会重置。想改就编辑 `~/.hermes/gateway.json`：
+  默认规则：空闲超过一定时长（微信 180 分钟、Telegram 240 分钟、Discord 60 分钟）或到每日固定时间（默认凌晨 4 点）会重置。想改就编辑 `~/.hermes/gateway.json`：
 
   ```json
   {
     "reset_by_platform": {
+      "weixin":   { "mode": "idle", "idle_minutes": 120 },
       "telegram": { "mode": "idle", "idle_minutes": 60 }
     }
   }
