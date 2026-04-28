@@ -1,0 +1,287 @@
+---
+import MarketingLayout from '@layouts/MarketingLayout.astro';
+import SectionHead from '@components/SectionHead.astro';
+import MarqueeDivider from '@components/MarqueeDivider.astro';
+import { useT } from '@lib/i18n';
+import { breadcrumbSchema } from '@lib/schemas';
+
+const locale = 'zh-CN' as const;
+const t = useT(locale);
+
+// 答案字段允许内联 HTML（<a>/<code>/<ol>/<ul> 等）。同一份字符串既用于 UI 渲染，
+// 也用于 FAQPage JSON-LD 的 acceptedAnswer.text —— Google 做富卡展示时会自动剥标签。
+interface QA {
+	q: string;
+	a: string;
+}
+interface Group {
+	num: string;
+	title: string;
+	en: string;
+	items: QA[];
+}
+
+const groups: Group[] = [
+	{
+		num: 'A',
+		title: '基础',
+		en: 'BASICS',
+		items: [
+			{
+				q: 'Hermes Agent 是什么？和普通聊天 AI 有什么区别？',
+				a: 'Hermes Agent 是 Nous Research 开源的自托管 AI Agent（MIT 协议）。和 ChatGPT / Claude 这类聊天产品最大的区别是：<b>它是一个持续运行在你服务器上的 Agent 本体，拥有持久记忆和 Skills 系统</b>。普通聊天 AI 每次对话都从零开始；Hermes 能记住你昨天说过的话，能把多步任务封装成可复用的 Skill，越用越懂你。',
+			},
+			{
+				q: '这是官方站点吗？和 Nous Research 什么关系？',
+				a: '<b>不是官方站点</b>。本站是社区作者维护的中文学习指南，不隶属 Nous Research。官方文档在 <a href="https://hermes-agent.nousresearch.com/docs/">hermes-agent.nousresearch.com</a>。本站所有教程都基于官方 API 亲测复现，遇到与官方文档不一致的地方，以官方为准。',
+			},
+			{
+				q: 'Hermes Agent 开源吗？能商用吗？',
+				a: '是的，MIT 协议开源，代码在 <a href="https://github.com/NousResearch/hermes-agent">GitHub / NousResearch / hermes-agent</a>。<b>商用、修改、二次分发都允许</b>，只需保留原始许可证声明。工具本身免费，你只为选用的 LLM API（OpenAI、Anthropic、OpenRouter、DeepSeek 等）付费——用本地模型则完全零成本。',
+			},
+			{
+				q: '和 OpenClaw 有什么区别？为什么要迁移？',
+				a: '两者基因相似，哲学不同。<b>OpenClaw 是"围绕消息网关的 Agent"，强调广度集成；Hermes 是"围绕学习 Agent 的网关"，强调深度学习</b>。最大差异在两点：<ul><li><b>Skills 系统</b>——OpenClaw 的 skills 是人写的静态模板；Hermes 能从你完成的任务中自动提炼可复用的 skill，越用越强。</li><li><b>记忆系统</b>——OpenClaw 用 Markdown 文件；Hermes 用 SQLite + FTS5 全文检索 + LLM 压缩的四层记忆，能精确调起几周前的对话。</li></ul>官方提供一键迁移命令 <code>hermes claw migrate</code>，可自动导入 SOUL.md / MEMORY.md / skills / API Keys。详见 <a href="/migrate/">迁移指南</a>。',
+			},
+		],
+	},
+	{
+		num: 'B',
+		title: '安装与环境',
+		en: 'INSTALL',
+		items: [
+			{
+				q: 'Windows 能装吗？必须用 WSL 吗？',
+				a: '<b>原生 Windows 不支持</b>，必须通过 WSL2。官方支持的环境是 Linux / macOS / WSL2 / Android（Termux）。一条命令装好依赖：<br><code>curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash</code><br><b>不要加 sudo</b>——安装器默认装到 <code>~/.local/bin</code>，加 sudo 反而会把脚本装到 <code>/usr/local/bin</code> 导致路径混乱。如果你之前误用 sudo 装过，先 <code>sudo rm /usr/local/bin/hermes</code> 清掉再重装。Android 用户把 <code>.[all]</code> 改成 <code>.[termux]</code>。',
+			},
+			{
+				q: '硬件要求高吗？能跑在便宜 VPS 上吗？',
+				a: '取决于你用云端 LLM 还是本地 LLM：<ul><li><b>云端 API</b>（OpenAI / OpenRouter / DeepSeek）——5 美元的小 VPS 就够，所有算力都在云端，本地只做编排。</li><li><b>完全本地跑</b>——建议 32B+ 参数的模型，至少 24 GB 显存。</li></ul>其他硬性要求：<code>Python ≥ 3.11</code>，所选模型的<b>上下文窗口必须 ≥ 64K tokens</b>——小于这个数的模型在启动时会被直接拒绝（因为多步工具调用装不下）。',
+			},
+		],
+	},
+	{
+		num: 'C',
+		title: '模型与费用',
+		en: 'MODELS & COST',
+		items: [
+			{
+				q: '支持国产模型吗？DeepSeek / Kimi / 智谱 GLM 能用吗？',
+				a: '<b>全部支持</b>。Hermes 接任何 OpenAI 兼容 API —— DeepSeek、Kimi（Moonshot）、智谱 AI（z.ai / GLM）、MiniMax、小米 MiMo、Qwen、NVIDIA NIM、OpenRouter（200+ 模型聚合）、OpenAI、Anthropic、Google 全都可以。只要目标服务实现了 <code>/v1/chat/completions</code>，用 <code>hermes model</code> 命令就能切过去。<b>切换不需要重启，记忆和 Skills 跨模型保留</b>。',
+			},
+			{
+				q: '能完全本地跑吗？（离线 / 不上传数据）',
+				a: '可以。先起一个本地推理服务（<a href="https://ollama.com">Ollama</a> / vLLM / llama.cpp / SGLang 都行），然后运行 <code>hermes model</code> → 选 "Custom endpoint" → 填 <code>http://localhost:11434/v1</code>（Ollama 默认端口），就彻底离线了，不再访问任何公网 API。注意本地模型要选 32B+ 的、且原生支持 64K 上下文的。',
+			},
+			{
+				q: '用一个月要花多少钱？',
+				a: '工具本身免费，费用只来自你调用的 LLM：<ul><li><b>纯本地模型</b>——0 元/月</li><li><b>国产 API</b>（DeepSeek、Kimi、智谱）——轻度使用 5–30 元/月</li><li><b>Claude / GPT</b>——轻度使用 20–100 元/月；日常深度使用 100–500 元/月</li><li><b>OpenRouter 路由</b>——按实际模型价格，可随时切换成便宜模型</li></ul>省钱建议：日常用 DeepSeek / Kimi，重要任务切到 Claude。<code>hermes model</code> 随时切，历史记忆不丢。',
+			},
+		],
+	},
+	{
+		num: 'D',
+		title: '使用与接入',
+		en: 'USAGE',
+		items: [
+			{
+				q: '怎么把 Hermes 接入微信 / 企业微信？',
+				a: 'Hermes 自带 Messaging Gateway，同时支持：<ul><li><b>个人微信</b>——itchat 协议，QR 扫码登录，适合个人助理</li><li><b>企业微信（WeCom）</b>——企业级 webhook，适合团队助理</li></ul>基础 3 步：<ol><li>在 <code>~/.hermes/config.yaml</code> 里开 <code>messaging.weixin.enabled: true</code></li><li>配好 allowlist（只响应指定微信号 / 群，防止误触）</li><li>运行 <code>hermes gateway run</code>，扫码登录</li></ol>完整 step-by-step（含 .env 配置、群策略、常见踩坑）见 <a href="/7-days/day-03/">Day 3 · 入驻聊天室</a>。<b>注意</b>：每个 profile 必须绑独立微信号，不能多 profile 共用一个账号。',
+			},
+			{
+				q: 'Memory 和 Skills 有什么区别？',
+				a: '两者都是 Hermes 的"持久状态"，职责分明：<ul><li><b>Memory（事实记忆）</b>——关于你和你项目的事实：你的名字、偏好、正在做的项目、过去对话里提过的任何内容。按相关度自动检索。</li><li><b>Skills（程序记忆）</b>——完成某类任务的操作步骤，例如"部署 Next.js 到 Vercel"、"生成周报"、"排查 nginx 502"。遇到相似任务时 Hermes 会自动调用。</li></ul>一句话：Memory 回答"你知道什么"，Skills 回答"你会做什么"。两者跨会话、跨模型都保留。',
+			},
+		],
+	},
+	{
+		num: 'E',
+		title: '数据与故障',
+		en: 'DATA & TROUBLESHOOTING',
+		items: [
+			{
+				q: '我的数据会上传到哪？隐私怎么保证？',
+				a: '<b>API 请求只发到你配置的 LLM 提供商</b>——Nous Research 不收集任何遥测数据。对话记录、记忆、Skills 全部存在本地 <code>~/.hermes/</code> 目录下的 SQLite 数据库。<ul><li>完全不想联网？配本地模型即可（见上一组 Q8）</li><li>想要加密备份？直接打包 <code>~/.hermes/</code> 就行</li><li>企业合规场景？搭私有 OpenAI-compatible endpoint（比如自部署 vLLM），公司数据不出内网</li></ul>',
+			},
+			{
+				q: '装完了跑 hermes 报 command not found 怎么办？',
+				a: '安装器把 <code>hermes</code> 装到 <code>~/.local/bin/</code>，但这个路径不在所有 shell 的默认 PATH 里。两步解决：<ol><li><code>source ~/.zshrc</code>（或 <code>~/.bashrc</code>）重新加载 shell 配置；或干脆关掉终端开一个新的。</li><li>还不行就 <code>echo $PATH</code> 确认是否包含 <code>~/.local/bin</code>。没有就手动把 <code>export PATH="$HOME/.local/bin:$PATH"</code> 加到 profile 文件末尾。</li></ol>',
+			},
+			{
+				q: '出问题了怎么排查？有哪些诊断工具？',
+				a: '三板斧：<ul><li><code>hermes doctor</code>——官方自带诊断命令，会逐项检查依赖、配置、模型连通性，告诉你缺什么、哪里错了、怎么修。</li><li><code>~/.hermes/logs/</code>——所有运行日志，按日期滚动，排查网关连接问题首先看这里。</li><li><a href="https://hermes-agent.nousresearch.com/docs/reference/faq/">官方 FAQ & Troubleshooting</a>——覆盖 WSL systemd 不稳定、WhatsApp 断连、MCP 工具不显示、Telegram 日志过载等常见场景。</li></ul>最常见的 429 限流错误：等几秒重试、升级套餐，或 <code>hermes chat --provider &lt;备用&gt;</code> 临时切到其他提供商。',
+			},
+		],
+	},
+];
+
+const allQA = groups.flatMap((g) => g.items);
+const faqSchema = {
+	'@context': 'https://schema.org',
+	'@type': 'FAQPage',
+	mainEntity: allQA.map((it) => ({
+		'@type': 'Question',
+		name: it.q,
+		acceptedAnswer: {
+			'@type': 'Answer',
+			text: it.a,
+		},
+	})),
+};
+const breadcrumb = breadcrumbSchema([
+	{ name: 'Hermes Agent 中文指南', path: '/' },
+	{ name: 'FAQ', path: '/faq/' },
+]);
+---
+
+<MarketingLayout
+	locale={locale}
+	title={t('meta.faq.title')}
+	description={t('meta.faq.description')}
+	ogImage="/og/docs.png"
+	schema={[breadcrumb, faqSchema]}
+>
+	<section class="intro">
+		<div class="intro-inner">
+			<div class="big">H/01.05</div>
+			<h1>Hermes Agent 中文 <span class="accent">FAQ</span></h1>
+			<p class="sub">新用户、自托管玩家、OpenClaw 迁移者最常问的 14 个问题。答案基于官方文档与作者亲测，随 Hermes 版本持续更新。</p>
+		</div>
+	</section>
+
+	<MarqueeDivider locale={locale} />
+
+	{groups.map((g) => (
+		<section class="group">
+			<SectionHead num={g.num} title={g.title} en={g.en} />
+			<div class="qa-list">
+				{g.items.map((it) => (
+					<article class="qa">
+						<h3>{it.q}</h3>
+						<div class="answer" set:html={it.a} />
+					</article>
+				))}
+			</div>
+		</section>
+	))}
+
+	<section class="cta">
+		<h2>还是搞不定？</h2>
+		<p>到 <a href="https://github.com/Hubery23/hermes-guide/issues">GitHub Issues</a> 提问，或直接翻一遍 <a href="/7-days/day-01/">七日教程 Day 01</a> 从头走一遍。</p>
+	</section>
+</MarketingLayout>
+
+<style>
+	.intro {
+		padding: 80px 32px 60px;
+		background: var(--sand);
+		border-bottom: 1px solid var(--ink);
+	}
+	.intro-inner { max-width: 760px; }
+	.big {
+		font-family: var(--font-display);
+		font-weight: 800;
+		font-size: 110px;
+		letter-spacing: -6px;
+		color: var(--tang);
+		line-height: 0.85;
+		margin-bottom: 12px;
+	}
+	.intro h1 {
+		font-family: var(--font-display);
+		font-size: 52px;
+		font-weight: 800;
+		letter-spacing: -2px;
+		line-height: 1.05;
+		margin: 0 0 20px;
+	}
+	.intro h1 .accent { color: var(--tang); }
+	.intro .sub {
+		font-family: var(--font-display);
+		font-size: 20px;
+		font-weight: 500;
+		line-height: 1.45;
+		max-width: 640px;
+		color: var(--ink-soft);
+	}
+
+	.group {
+		padding: 60px 32px;
+		border-bottom: 1px solid var(--ink);
+	}
+	.group:nth-of-type(even) { background: var(--paper); }
+
+	.qa-list {
+		max-width: 860px;
+		display: flex;
+		flex-direction: column;
+		gap: 0;
+	}
+	.qa {
+		padding: 28px 0;
+		border-top: 1px solid var(--sand-dark);
+	}
+	.qa:first-child { border-top: none; }
+	.qa h3 {
+		font-family: var(--font-display);
+		font-size: 22px;
+		font-weight: 700;
+		letter-spacing: -0.5px;
+		line-height: 1.3;
+		margin: 0 0 14px;
+	}
+	.answer {
+		font-size: 15.5px;
+		line-height: 1.7;
+		color: var(--ink);
+	}
+	.answer a {
+		color: var(--ink);
+		text-decoration: underline;
+		text-decoration-color: var(--tang);
+		text-decoration-thickness: 2px;
+		text-underline-offset: 3px;
+	}
+	.answer a:hover { color: var(--tang); }
+	.answer code {
+		font-family: var(--font-mono);
+		font-size: 13px;
+		background: var(--sand);
+		padding: 2px 6px;
+		border: 1px solid var(--sand-dark);
+		border-radius: 2px;
+	}
+	.group:nth-of-type(even) .answer code { background: var(--sand); }
+	.answer ul, .answer ol {
+		margin: 10px 0;
+		padding-left: 22px;
+	}
+	.answer li { margin: 6px 0; }
+	.answer b { font-weight: 700; }
+
+	.cta {
+		padding: 80px 32px;
+		background: var(--ink);
+		color: var(--sand);
+		text-align: center;
+	}
+	.cta h2 {
+		font-family: var(--font-display);
+		font-size: 44px;
+		font-weight: 800;
+		letter-spacing: -1.5px;
+		margin: 0 0 12px;
+	}
+	.cta p { color: var(--ink-faint); font-size: 15px; }
+	.cta a {
+		color: var(--amber);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	@media (max-width: 760px) {
+		.big { font-size: 72px; }
+		.intro h1 { font-size: 36px; }
+		.qa h3 { font-size: 19px; }
+	}
+</style>

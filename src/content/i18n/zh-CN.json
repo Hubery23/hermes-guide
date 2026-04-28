@@ -51,5 +51,7 @@
   "meta.migrate.title": "从 OpenClaw 迁移到 Hermes Agent ｜ 映射表 + 完整步骤",
   "meta.migrate.description": "OpenClaw 与 Hermes Agent 概念一一对应。亲测过的迁移映射表：Skills / 记忆 / 工具链 / Bot 配置一键搬家，含 hermes claw migrate 命令详解。",
   "meta.7days.title": "Hermes Agent 七日入门教程 · 每天 30 分钟，7 天精通",
-  "meta.7days.description": "从装机到定时任务，7 天打通 Hermes Agent 全流程：模型选型、IM 接入、内置工具、Skills、记忆、故障排查。每章一小时内完成，Mac / Linux / WSL 通用。"
+  "meta.7days.description": "从装机到定时任务，7 天打通 Hermes Agent 全流程：模型选型、IM 接入、内置工具、Skills、记忆、故障排查。每章一小时内完成，Mac / Linux / WSL 通用。",
+  "meta.faq.title": "Hermes Agent 常见问题 FAQ · 14 个新手最常踩的坑",
+  "meta.faq.description": "Hermes Agent 中文 FAQ：Windows 支持、国产模型接入（DeepSeek / Kimi / GLM）、微信 / Telegram 接入、Memory vs Skills、OpenClaw 迁移、隐私与排错——14 个亲测过的真实问题。"
 }

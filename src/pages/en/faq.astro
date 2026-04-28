@@ -1,0 +1,281 @@
+---
+import MarketingLayout from '@layouts/MarketingLayout.astro';
+import SectionHead from '@components/SectionHead.astro';
+import MarqueeDivider from '@components/MarqueeDivider.astro';
+import { useT } from '@lib/i18n';
+import { breadcrumbSchema } from '@lib/schemas';
+
+const locale = 'en' as const;
+const t = useT(locale);
+
+interface QA {
+	q: string;
+	a: string;
+}
+interface Group {
+	num: string;
+	title: string;
+	en: string;
+	items: QA[];
+}
+
+const groups: Group[] = [
+	{
+		num: 'A',
+		title: 'Basics',
+		en: '基础',
+		items: [
+			{
+				q: 'What is Hermes Agent? How is it different from ChatGPT?',
+				a: 'Hermes Agent is an MIT-licensed, self-hosted AI agent from Nous Research. The core difference from ChatGPT / Claude: <b>Hermes is a persistent agent that lives on your server, with durable memory and a Skills system</b>. A regular chat UI starts from zero every session; Hermes remembers what you said yesterday, packages multi-step tasks into reusable skills, and gets sharper the more you use it.',
+			},
+			{
+				q: 'Is this the official site? What\'s the relationship with Nous Research?',
+				a: '<b>No, this is not official</b>. This site is a community-maintained Chinese + English guide, not affiliated with Nous Research. Official docs live at <a href="https://hermes-agent.nousresearch.com/docs/">hermes-agent.nousresearch.com</a>. Everything here is tested by the author against the official releases; when in doubt, the official docs win.',
+			},
+			{
+				q: 'Is Hermes Agent open source? Can I use it commercially?',
+				a: 'Yes — MIT license, source on <a href="https://github.com/NousResearch/hermes-agent">GitHub / NousResearch / hermes-agent</a>. <b>Commercial use, modification, and redistribution are all allowed</b> as long as the original notice is preserved. The tool itself is free — you only pay for the LLM provider you pick (OpenAI / Anthropic / OpenRouter / DeepSeek / etc.). Local models cost nothing.',
+			},
+			{
+				q: 'How is Hermes different from OpenClaw? Should I migrate?',
+				a: 'Similar DNA, different philosophy. <b>OpenClaw wraps an agent around a messaging gateway (breadth-first); Hermes wraps a gateway around a learning agent (depth-first)</b>. Two big differences:<ul><li><b>Skills</b> — OpenClaw skills are static, human-authored templates. Hermes distills reusable skills automatically from completed tasks.</li><li><b>Memory</b> — OpenClaw stores plain Markdown. Hermes uses SQLite + FTS5 full-text search + LLM summarization, a four-layer memory system.</li></ul>Official one-shot migration: <code>hermes claw migrate</code> imports SOUL.md / MEMORY.md / skills / API keys. See the <a href="/en/migrate/">migration guide</a>.',
+			},
+		],
+	},
+	{
+		num: 'B',
+		title: 'Install & Environment',
+		en: '安装与环境',
+		items: [
+			{
+				q: 'Does Hermes work on Windows? Do I need WSL?',
+				a: '<b>Native Windows is not supported</b> — you need WSL2. Officially supported: Linux / macOS / WSL2 / Android (Termux). One-liner installer:<br><code>curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash</code><br><b>Don\'t prefix with sudo</b> — the installer writes to <code>~/.local/bin</code>; sudo pushes it to <code>/usr/local/bin</code> and breaks path resolution. If you did, run <code>sudo rm /usr/local/bin/hermes</code> first, then reinstall. Android users replace <code>.[all]</code> with <code>.[termux]</code>.',
+			},
+			{
+				q: 'Hardware requirements? Can it run on a cheap VPS?',
+				a: 'Depends on where the LLM runs:<ul><li><b>Cloud APIs</b> (OpenAI / OpenRouter / DeepSeek) — a $5 VPS is plenty. All compute is remote.</li><li><b>Fully local</b> — 32B+ parameter models, 24 GB+ VRAM minimum.</li></ul>Hard requirements: <code>Python ≥ 3.11</code>; the chosen model <b>must expose at least 64K tokens of context</b> — anything smaller is rejected at startup (multi-step tool calls won\'t fit).',
+			},
+		],
+	},
+	{
+		num: 'C',
+		title: 'Models & Cost',
+		en: '模型与费用',
+		items: [
+			{
+				q: 'Which LLM providers work? Do Chinese models work?',
+				a: '<b>Everything OpenAI-compatible works</b>: OpenAI, Anthropic, Google, OpenRouter (200+ models), Nous Portal, NVIDIA NIM, Hugging Face, plus Chinese providers like DeepSeek, Kimi (Moonshot), z.ai/GLM, MiniMax, Qwen, Xiaomi MiMo. If the endpoint implements <code>/v1/chat/completions</code>, point <code>hermes model</code> at it. <b>Switching providers doesn\'t need a restart — memory and skills carry over</b>.',
+			},
+			{
+				q: 'Can I run Hermes fully offline?',
+				a: 'Yes. Start a local inference server (<a href="https://ollama.com">Ollama</a> / vLLM / llama.cpp / SGLang), then run <code>hermes model</code> → select "Custom endpoint" → enter <code>http://localhost:11434/v1</code> (Ollama\'s default). Zero traffic to public APIs. Pick a 32B+ model that natively supports 64K context.',
+			},
+			{
+				q: 'How much does it cost per month?',
+				a: 'The tool is free; cost comes from LLM usage:<ul><li><b>Local models</b> — $0/mo</li><li><b>Chinese APIs</b> (DeepSeek / Kimi / GLM) — $1–5/mo light use</li><li><b>Claude / GPT</b> — $3–15/mo light, $15–70/mo daily deep use</li><li><b>OpenRouter</b> — per-model pricing, swap cheap-to-expensive on demand</li></ul>Savings tip: default to cheap Chinese models; swap to Claude for hard tasks. <code>hermes model</code> switches instantly; memory stays.',
+			},
+		],
+	},
+	{
+		num: 'D',
+		title: 'Usage & Integrations',
+		en: '使用与接入',
+		items: [
+			{
+				q: 'How do I connect Hermes to messaging platforms?',
+				a: 'Built-in Messaging Gateway supports Telegram, Discord, Slack, WhatsApp, iMessage, WeChat (itchat), and WeCom (enterprise). Basic recipe:<ol><li>Enable the channel in <code>~/.hermes/config.yaml</code> (e.g., <code>messaging.telegram.enabled: true</code>)</li><li>Configure an allowlist (only respond to specific users / channels)</li><li>Run <code>hermes gateway run</code> and follow the prompts</li></ol>Full walkthrough: <a href="/en/7-days/day-03/">Day 3 · Go Social</a>. <b>Note</b>: each profile needs its own bot token — profiles can\'t share one.',
+			},
+			{
+				q: 'What\'s the difference between Memory and Skills?',
+				a: 'Both are persistent across sessions, but with distinct roles:<ul><li><b>Memory (factual)</b> — facts about you and your projects: your name, preferences, ongoing work, anything mentioned in past chats. Auto-retrieved by relevance.</li><li><b>Skills (procedural)</b> — step-by-step how-to for recurring tasks: "deploy Next.js to Vercel", "draft weekly report", "debug nginx 502". Auto-invoked on similar tasks.</li></ul>One-liner: Memory is "what you know"; Skills is "what you can do". Both survive model switches.',
+			},
+		],
+	},
+	{
+		num: 'E',
+		title: 'Data & Troubleshooting',
+		en: '数据与故障',
+		items: [
+			{
+				q: 'Where does my data go? What about privacy?',
+				a: '<b>API calls only hit the LLM provider you configure</b> — Nous Research collects no telemetry. Conversations, memory, and skills live locally in a SQLite DB under <code>~/.hermes/</code>.<ul><li>Want full offline? Use a local model (see Q above).</li><li>Need encrypted backups? Just tar <code>~/.hermes/</code>.</li><li>Enterprise compliance? Point Hermes at a private OpenAI-compatible endpoint (self-hosted vLLM) — data stays on your network.</li></ul>',
+			},
+			{
+				q: 'I get "hermes: command not found" after install. Now what?',
+				a: 'The installer writes <code>hermes</code> to <code>~/.local/bin/</code>, which isn\'t in every shell\'s default PATH. Two steps:<ol><li><code>source ~/.zshrc</code> (or <code>~/.bashrc</code>), or just open a fresh terminal.</li><li>Still missing? Run <code>echo $PATH</code>. If <code>~/.local/bin</code> isn\'t in it, append <code>export PATH="$HOME/.local/bin:$PATH"</code> to your profile.</li></ol>',
+			},
+			{
+				q: 'Something broke. How do I diagnose it?',
+				a: 'Three tools:<ul><li><code>hermes doctor</code> — the official diagnostic command: checks deps, config, model connectivity, and prints exactly what to fix.</li><li><code>~/.hermes/logs/</code> — rotating logs. Gateway issues are usually visible here.</li><li><a href="https://hermes-agent.nousresearch.com/docs/reference/faq/">Official FAQ & Troubleshooting</a> — covers WSL systemd issues, WhatsApp disconnects, MCP tools not showing, Telegram log spam.</li></ul>For 429 rate-limit: wait, upgrade your plan, or switch providers via <code>hermes chat --provider &lt;alt&gt;</code>.',
+			},
+		],
+	},
+];
+
+const allQA = groups.flatMap((g) => g.items);
+const faqSchema = {
+	'@context': 'https://schema.org',
+	'@type': 'FAQPage',
+	mainEntity: allQA.map((it) => ({
+		'@type': 'Question',
+		name: it.q,
+		acceptedAnswer: { '@type': 'Answer', text: it.a },
+	})),
+};
+const breadcrumb = breadcrumbSchema([
+	{ name: 'Hermes Agent Guide', path: '/en/' },
+	{ name: 'FAQ', path: '/en/faq/' },
+]);
+---
+
+<MarketingLayout
+	locale={locale}
+	title={t('meta.faq.title')}
+	description={t('meta.faq.description')}
+	ogImage="/og/docs.png"
+	schema={[breadcrumb, faqSchema]}
+>
+	<section class="intro">
+		<div class="intro-inner">
+			<div class="big">H/01.05</div>
+			<h1>Hermes Agent <span class="accent">FAQ</span></h1>
+			<p class="sub">The 14 questions new users, self-hosters, and OpenClaw migrators ask most. Answers grounded in official docs and tested on the author\'s own setup, kept current with each Hermes release.</p>
+		</div>
+	</section>
+
+	<MarqueeDivider locale={locale} />
+
+	{groups.map((g) => (
+		<section class="group">
+			<SectionHead num={g.num} title={g.title} en={g.en} />
+			<div class="qa-list">
+				{g.items.map((it) => (
+					<article class="qa">
+						<h3>{it.q}</h3>
+						<div class="answer" set:html={it.a} />
+					</article>
+				))}
+			</div>
+		</section>
+	))}
+
+	<section class="cta">
+		<h2>Still stuck?</h2>
+		<p>Open an issue on <a href="https://github.com/Hubery23/hermes-guide/issues">GitHub</a>, or walk through <a href="/en/7-days/day-01/">Day 01</a> end to end.</p>
+	</section>
+</MarketingLayout>
+
+<style>
+	.intro {
+		padding: 80px 32px 60px;
+		background: var(--sand);
+		border-bottom: 1px solid var(--ink);
+	}
+	.intro-inner { max-width: 760px; }
+	.big {
+		font-family: var(--font-display);
+		font-weight: 800;
+		font-size: 110px;
+		letter-spacing: -6px;
+		color: var(--tang);
+		line-height: 0.85;
+		margin-bottom: 12px;
+	}
+	.intro h1 {
+		font-family: var(--font-display);
+		font-size: 52px;
+		font-weight: 800;
+		letter-spacing: -2px;
+		line-height: 1.05;
+		margin: 0 0 20px;
+	}
+	.intro h1 .accent { color: var(--tang); }
+	.intro .sub {
+		font-family: var(--font-display);
+		font-size: 20px;
+		font-weight: 500;
+		line-height: 1.45;
+		max-width: 640px;
+		color: var(--ink-soft);
+	}
+
+	.group {
+		padding: 60px 32px;
+		border-bottom: 1px solid var(--ink);
+	}
+	.group:nth-of-type(even) { background: var(--paper); }
+
+	.qa-list {
+		max-width: 860px;
+		display: flex;
+		flex-direction: column;
+		gap: 0;
+	}
+	.qa {
+		padding: 28px 0;
+		border-top: 1px solid var(--sand-dark);
+	}
+	.qa:first-child { border-top: none; }
+	.qa h3 {
+		font-family: var(--font-display);
+		font-size: 22px;
+		font-weight: 700;
+		letter-spacing: -0.5px;
+		line-height: 1.3;
+		margin: 0 0 14px;
+	}
+	.answer {
+		font-size: 15.5px;
+		line-height: 1.7;
+		color: var(--ink);
+	}
+	.answer a {
+		color: var(--ink);
+		text-decoration: underline;
+		text-decoration-color: var(--tang);
+		text-decoration-thickness: 2px;
+		text-underline-offset: 3px;
+	}
+	.answer a:hover { color: var(--tang); }
+	.answer code {
+		font-family: var(--font-mono);
+		font-size: 13px;
+		background: var(--sand);
+		padding: 2px 6px;
+		border: 1px solid var(--sand-dark);
+		border-radius: 2px;
+	}
+	.answer ul, .answer ol {
+		margin: 10px 0;
+		padding-left: 22px;
+	}
+	.answer li { margin: 6px 0; }
+	.answer b { font-weight: 700; }
+
+	.cta {
+		padding: 80px 32px;
+		background: var(--ink);
+		color: var(--sand);
+		text-align: center;
+	}
+	.cta h2 {
+		font-family: var(--font-display);
+		font-size: 44px;
+		font-weight: 800;
+		letter-spacing: -1.5px;
+		margin: 0 0 12px;
+	}
+	.cta p { color: var(--ink-faint); font-size: 15px; }
+	.cta a {
+		color: var(--amber);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	@media (max-width: 760px) {
+		.big { font-size: 72px; }
+		.intro h1 { font-size: 36px; }
+		.qa h3 { font-size: 19px; }
+	}
+</style>
