@@ -34,7 +34,7 @@
 ├── reference.md                 # 已有
 └── src/
     ├── assets/
-    │   └── logo-mark.svg        # Hermes/Agent 简单文字标
+    │   └── logo-mark.svg        # Hermes Agent 简单文字标
     ├── components/
     │   ├── WarningStrip.astro   # 顶部警戒带
     │   ├── LangSwitcher.astro   # 中/EN 切换
@@ -277,8 +277,8 @@ export default defineConfig({
     mdx(),
     starlight({
       title: {
-        'zh-CN': 'Hermes/Agent',
-        'en': 'Hermes/Agent'
+        'zh-CN': 'Hermes Agent',
+        'en': 'Hermes Agent'
       },
       defaultLocale: 'zh-CN',
       locales: {
@@ -1076,7 +1076,7 @@ const t = useT(locale);
 ---
 
 <footer>
-  <span>HERMES/AGENT</span>
+  <span>HERMES AGENT</span>
   <span class="sep">/</span>
   <span>S/N 2026-0001</span>
   <span class="sep">/</span>

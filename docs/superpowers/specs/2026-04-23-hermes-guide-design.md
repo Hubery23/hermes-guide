@@ -152,7 +152,7 @@
 7. **Final CTA**：大字 "现在开始，7 天后上线你的 Agent"
 8. **Footer**：S/N、MIT 声明、非官方社区指南、**GitHub ↗ 链接指向 `github.com/Hubery23/<repo>`**、"贡献 PR" 指引
 
-**Logo 文字**：暂定 `Hermes/Agent`（左下"Hermes"主名 + 斜杠橙色 + "Agent"）。**站点正式品牌名未定**，见 §10 TBD。
+**Logo 文字**：暂定 `Hermes Agent`（左下"Hermes"主名 + 斜杠橙色 + "Agent"）。**站点正式品牌名未定**，见 §10 TBD。
 
 ---
 
@@ -285,7 +285,7 @@
 
 所有 MVP 前置决策均已拍板（见顶部 metadata）。
 
-- ✅ 站点 logo：`Hermes/Agent`
+- ✅ 站点 logo：`Hermes Agent`
 - ✅ 域名：`hermesagentguide.online`
 - ✅ 技术栈：B'（Astro + Starlight 混合）
 - ✅ 首轮语言：中文先行、英文占位可路由
