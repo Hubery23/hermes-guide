@@ -27,3 +27,10 @@ pnpm-debug.log*
 .wrangler/
 test-results/
 playwright-report/
+
+# local AI agent / IDE tooling
+.agents/
+.claude/
+.trae/
+skills/
+skills-lock.json
