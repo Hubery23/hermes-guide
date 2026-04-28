@@ -18,6 +18,14 @@ export function websiteSchema(locale: Locale) {
 		url: SITE,
 		inLanguage: locale === 'zh-CN' ? 'zh-CN' : 'en',
 		publisher: { '@id': `${SITE}/#organization` },
+		potentialAction: {
+			'@type': 'SearchAction',
+			target: {
+				'@type': 'EntryPoint',
+				urlTemplate: `${SITE}/?q={search_term_string}`,
+			},
+			'query-input': 'required name=search_term_string',
+		},
 	};
 }
 
