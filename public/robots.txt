@@ -1,7 +1,7 @@
 User-agent: *
 Allow: /
 
-# 尚未完工的英文 stub 章节禁止抓取
+# 英文 stub 章节翻译完成前禁止抓取（已配 head meta noindex 双闸门）
 Disallow: /en/7-days/day-01/
 Disallow: /en/7-days/day-02/
 Disallow: /en/7-days/day-03/
@@ -10,5 +10,23 @@ Disallow: /en/7-days/day-05/
 Disallow: /en/7-days/day-06/
 Disallow: /en/7-days/day-07/
 Disallow: /en/migrate/from-openclaw/
+
+# AI 搜索引擎欢迎抓取——FAQ 与教程页注入了 FAQPage / Course schema，
+# 主要面向 ChatGPT search、Perplexity、Bing Copilot、Google AI Overview。
+# 默认 User-agent: * 已 Allow，本段仅作为意图声明，方便审计。
+User-agent: GPTBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
 
 Sitemap: https://hermesagentguide.online/sitemap-index.xml

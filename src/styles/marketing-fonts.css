@@ -1,0 +1,14 @@
+/* src/styles/marketing-fonts.css — 营销层字体声明
+ *
+ * 由 MarketingLayout.astro 通过 <link rel="preload" as="style"> 异步加载，
+ * 不阻塞渲染。font-display: swap 由 fontsource 默认开启，
+ * 字体下载完成前文字使用 fallback 字体（PingFang SC / 系统 sans）渲染。
+ *
+ * 字重选择对齐 Task 1 的 fonts.css，营销层与文档层视觉一致。
+ */
+
+@import '@fontsource-variable/bricolage-grotesque';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/700.css';
+@import '@fontsource/noto-sans-sc/400.css';

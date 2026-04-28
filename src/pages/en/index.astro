@@ -36,6 +36,13 @@ const days = [
 	ogImage="/og/home.png"
 	schema={courseSchema(locale)}
 >
+	{/* SearchAction landing: forward ?q= to docs hub where Pagefind is wired. Inline to avoid FOUC. */}
+	<script is:inline>
+		(() => {
+			const q = new URLSearchParams(location.search).get('q');
+			if (q) location.replace('/en/7-days/?q=' + encodeURIComponent(q));
+		})();
+	</script>
 	<section class="hero">
 		<div class="hero-l">
 			<div class="hero-id">

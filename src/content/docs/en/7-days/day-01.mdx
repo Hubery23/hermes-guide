@@ -1,32 +1,194 @@
 ---
-title: "Boot Up: Your First Chat with Hermes"
-description: "Install, set env vars, complete your first chat."
+title: "Day 1 · Install Hermes, Say Your First Word"
+description: "One curl command. Pick a provider. Have your first conversation. Only prerequisite: Git."
 day: 1
-milestone: false
+duration: "30 min"
+milestone: true
 head:
   - tag: meta
     attrs:
       name: robots
       content: noindex,follow
 sources:
-  - title: "Hermes Agent official docs"
-    url: "https://hermes-agent.nousresearch.com/docs/"
+  - title: "Hermes Agent · Installation"
+    url: "https://hermes-agent.nousresearch.com/docs/getting-started/installation"
+  - title: "Hermes Agent · Quickstart"
+    url: "https://hermes-agent.nousresearch.com/docs/getting-started/quickstart"
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Steps } from '@astrojs/starlight/components';
 
-<Aside type="caution" title="English version coming soon">
-The Chinese version is live [here](/7-days/day-01/). Translations welcome via [GitHub](https://github.com/Hubery23/hermes-guide).
+## Today's Goal
+
+Run `hermes` or `hermes --tui` and get a reply to your first message.
+
+---
+
+## Prerequisites
+
+**One requirement: Git must be installed.**
+
+The installer handles everything else automatically — Python 3.11 (via uv, no sudo required), Node.js v22, ripgrep, ffmpeg. You do not need to pre-install any of these.
+
+```bash
+git --version   # any output is fine, version does not matter
+```
+
+If you get `command not found`, install Git first:
+
+```bash
+# macOS
+brew install git
+# or Xcode Command Line Tools (no Homebrew required)
+xcode-select --install
+
+# Ubuntu / Debian / WSL2
+sudo apt update && sudo apt install git
+
+# Fedora / RHEL
+sudo dnf install git
+```
+
+<Aside type="caution" title="Windows native is not supported">
+  Hermes supports Linux, macOS, WSL2, and Android (Termux). Native Windows is not supported. Install WSL2 first, then run the commands below inside a WSL2 terminal.
 </Aside>
 
-## What this chapter covers
+---
 
-(Coming soon.)
+## Steps
 
-## Expected output
+<Steps>
 
-(The observable result after completing this chapter will be listed here.)
+1. **One-command install**
 
-## Sources
+   Copy and paste this into your terminal:
 
-- Hermes Agent official docs: https://hermes-agent.nousresearch.com/docs/
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+   ```
+
+   The installer will: download dependencies, clone the repo, create a virtual environment, and register the `hermes` command in your global PATH. Expect 1–3 minutes depending on network speed.
+
+   <Aside type="note" title="What the installer does">
+     No manual `pip install` needed. The installer detects missing dependencies and fills them in automatically, including Python version management via uv.
+   </Aside>
+
+2. **Reload your shell**
+
+   After installation, the terminal will prompt you to run:
+
+   ```bash
+   source ~/.bashrc   # bash users
+   # or
+   source ~/.zshrc    # zsh users (macOS default)
+   ```
+
+   This makes the `hermes` command available in your PATH.
+
+3. **Choose a Provider**
+
+   This is the most important step. Run the interactive wizard to select an LLM provider and model:
+
+   ```bash
+   hermes model
+   ```
+
+   | Situation | Recommended choice |
+   |-----------|-------------------|
+   | First time, want the fastest start | Nous Portal or OpenRouter |
+   | Already have an Anthropic API key | Anthropic (Claude) |
+   | Already have an OpenAI API key | OpenAI Codex |
+   | Want a local model | Ollama or a custom OpenAI-compatible endpoint |
+
+   <Aside type="caution" title="Minimum context requirement: 64K tokens">
+     Hermes requires a model with at least a 64,000-token context window. Most major models (Claude, GPT-4o, Gemini, Qwen, DeepSeek) meet this. For local models, set the context size explicitly (llama.cpp: `--ctx-size 65536`).
+   </Aside>
+
+   <Aside type="tip" title="You can switch anytime">
+     Provider selection is not permanent. Run `hermes model` at any time to switch — your configuration is preserved.
+   </Aside>
+
+4. **Start your first conversation**
+
+   Two interfaces are available — pick whichever you prefer:
+
+   ```bash
+   hermes          # classic CLI
+   hermes --tui    # modern TUI (recommended — mouse support, popups, non-blocking input)
+   ```
+
+   After launch you will see Hermes's welcome banner showing the active model and available tools. Try sending a message:
+
+   ```
+   Hello, list all the files in the current directory.
+   ```
+
+   Success looks like:
+   - The banner shows the provider and model you just selected
+   - Hermes replies without errors
+   - It invokes the terminal tool to fulfil your request
+
+5. **Verify session persistence**
+
+   After exiting Hermes, run:
+
+   ```bash
+   hermes --continue   # resume the last conversation
+   hermes -c           # shorthand
+   ```
+
+   If you land back in the previous conversation, session persistence is working. This matters when you start running parallel tasks later in the series.
+
+</Steps>
+
+---
+
+## Expected Output
+
+After completing this chapter you should see something like:
+
+```
+$ hermes
+Welcome to Hermes Agent v0.10.x
+Provider: anthropic · Model: claude-opus-4.6
+Tools: terminal, file, web_search ...
+
+You: Hello
+Hermes: Hello! I'm Hermes. What can I help you with?
+```
+
+---
+
+## Troubleshooting
+
+<Aside type="danger" title="hermes: command not found">
+  Run `source ~/.bashrc` (or `~/.zshrc`). If that does not fix it, add the path manually:
+
+  ```bash
+  export PATH="$HOME/.local/bin:$PATH"
+  ```
+
+  Append this line to your shell config file, then source it again.
+</Aside>
+
+<Aside type="danger" title="Install script fails">
+  Check whether you can reach GitHub. On a restricted network, try installing via pip instead:
+
+  ```bash
+  python3 -m pip install hermes-agent
+  ```
+</Aside>
+
+<Aside type="danger" title="Hermes starts but replies are empty or show errors">
+  Provider authentication or model selection is likely wrong. Re-run:
+
+  ```bash
+  hermes model
+  ```
+
+  Verify that the provider, model name, and API key are all correct.
+</Aside>
+
+<Aside type="note" title="Full diagnostics">
+  Run `hermes doctor` — it lists every missing item with fix suggestions. When something strange is happening, this is the first command to run.
+</Aside>

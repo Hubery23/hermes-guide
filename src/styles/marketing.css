@@ -1,0 +1,44 @@
+/* src/styles/marketing.css — 营销层全局样式
+ *
+ * 营销层（src/pages/*.astro 直接渲染、不走 Starlight）专用。
+ * H 工业设计系统的 token 在此定义；文档层 src/styles/theme.css
+ * 包含同一组 token 的副本——改色时务必两处同步。
+ *
+ * 不包含：Starlight 选择器、Pagefind 搜索 UI、Expressive Code 代码块。
+ * 这些选择器在营销页 DOM 里不存在，剔除可减小首屏 render-blocking 体积。
+ */
+
+/* ===== 1. H 工业设计 Token ===== */
+:root {
+	/* 主色板 */
+	--sand: #e8e2d4;
+	--sand-dark: #d9d2bf;
+	--paper: #f4efe1;
+	--ink: #2b2b2e;
+	--ink-soft: #44444a;
+	--tang: #f5713a;
+	--amber: #e8c547;
+}
+
+/* ===== 2. 基础结构 ===== */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+	background: var(--sand);
+	color: var(--ink);
+	font-family: var(--font-body);
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== 3. 标题 ===== */
+h1, h2, h3, h4 {
+	font-family: var(--font-display);
+	letter-spacing: -0.02em;
+}
+
+/* ===== 4. 等宽字 ===== */
+code, pre, .mono {
+	font-family: var(--font-mono);
+}

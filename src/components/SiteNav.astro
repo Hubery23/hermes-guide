@@ -8,6 +8,10 @@ interface Props {
 const { locale } = Astro.props;
 const t = useT(locale);
 const lp = (p: string) => swapLocalePath(p, locale);
+
+// EN day-NN 章节仍是 stub（noindex + Disallow），CTA 在英文站直接跳中文版，避免 dead-end。
+const startHref = locale === 'en' ? '/7-days/day-01/' : '/7-days/day-01/';
+const startHreflang = locale === 'en' ? 'zh-CN' : undefined;
 ---
 
 <nav class="nav">
@@ -20,7 +24,7 @@ const lp = (p: string) => swapLocalePath(p, locale);
 		<li><a href={lp('/migrate/')}>{t('nav.migrate')}</a></li>
 		<li><a href={lp('/faq/')}>{t('nav.faq')}</a></li>
 	</ul>
-	<a href={lp('/7-days/day-01/')} class="cta">◉ {t('nav.start')}</a>
+	<a href={startHref} hreflang={startHreflang} class="cta">◉ {t('nav.start')}</a>
 </nav>
 
 <style>

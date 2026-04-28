@@ -52,11 +52,11 @@ const groups: Group[] = [
 		items: [
 			{
 				q: 'Windows 能装吗？必须用 WSL 吗？',
-				a: '<b>原生 Windows 不支持</b>，必须通过 WSL2。官方支持的环境是 Linux / macOS / WSL2 / Android（Termux）。一条命令装好依赖：<br><code>curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash</code><br><b>不要加 sudo</b>——安装器默认装到 <code>~/.local/bin</code>，加 sudo 反而会把脚本装到 <code>/usr/local/bin</code> 导致路径混乱。如果你之前误用 sudo 装过，先 <code>sudo rm /usr/local/bin/hermes</code> 清掉再重装。Android 用户把 <code>.[all]</code> 改成 <code>.[termux]</code>。',
+				a: '<b>原生 Windows 不支持</b>，必须通过 WSL2。官方支持的环境是 Linux / macOS / WSL2 / Android（Termux）。一条命令装好依赖：<br><code>curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash</code><br><b>不要加 sudo</b>——安装器默认装到 <code>~/.local/bin</code>，加 sudo 反而会把脚本装到 <code>/usr/local/bin</code> 导致路径混乱。如果你之前误用 sudo 装过，先 <code>sudo rm /usr/local/bin/hermes</code> 清掉再重装。Android 用户把 <code>.[all]</code> 改成 <code>.[termux]</code>。装机完整流程见 <a href="/7-days/day-01/">Day 1 · 安装 Hermes，说出第一句话</a>。',
 			},
 			{
 				q: '硬件要求高吗？能跑在便宜 VPS 上吗？',
-				a: '取决于你用云端 LLM 还是本地 LLM：<ul><li><b>云端 API</b>（OpenAI / OpenRouter / DeepSeek）——5 美元的小 VPS 就够，所有算力都在云端，本地只做编排。</li><li><b>完全本地跑</b>——建议 32B+ 参数的模型，至少 24 GB 显存。</li></ul>其他硬性要求：<code>Python ≥ 3.11</code>，所选模型的<b>上下文窗口必须 ≥ 64K tokens</b>——小于这个数的模型在启动时会被直接拒绝（因为多步工具调用装不下）。',
+				a: '取决于你用云端 LLM 还是本地 LLM：<ul><li><b>云端 API</b>（OpenAI / OpenRouter / DeepSeek）——5 美元的小 VPS 就够，所有算力都在云端，本地只做编排。</li><li><b>完全本地跑</b>——建议 32B+ 参数的模型，至少 24 GB 显存。</li></ul>其他硬性要求：<code>Python ≥ 3.11</code>，所选模型的<b>上下文窗口必须 ≥ 64K tokens</b>——小于这个数的模型在启动时会被直接拒绝（因为多步工具调用装不下）。模型选型与本地推理实战见 <a href="/7-days/day-02/">Day 2 · 挑个大脑</a>。',
 			},
 		],
 	},
@@ -75,7 +75,7 @@ const groups: Group[] = [
 			},
 			{
 				q: '用一个月要花多少钱？',
-				a: '工具本身免费，费用只来自你调用的 LLM：<ul><li><b>纯本地模型</b>——0 元/月</li><li><b>国产 API</b>（DeepSeek、Kimi、智谱）——轻度使用 5–30 元/月</li><li><b>Claude / GPT</b>——轻度使用 20–100 元/月；日常深度使用 100–500 元/月</li><li><b>OpenRouter 路由</b>——按实际模型价格，可随时切换成便宜模型</li></ul>省钱建议：日常用 DeepSeek / Kimi，重要任务切到 Claude。<code>hermes model</code> 随时切，历史记忆不丢。',
+				a: '工具本身免费，费用只来自你调用的 LLM：<ul><li><b>纯本地模型</b>——0 元/月</li><li><b>国产 API</b>（DeepSeek、Kimi、智谱）——轻度使用 5–30 元/月</li><li><b>Claude / GPT</b>——轻度使用 20–100 元/月；日常深度使用 100–500 元/月</li><li><b>OpenRouter 路由</b>——按实际模型价格，可随时切换成便宜模型</li></ul>省钱建议：日常用 DeepSeek / Kimi，重要任务切到 Claude。<code>hermes model</code> 随时切，历史记忆不丢。多模型路由配置见 <a href="/7-days/day-02/">Day 2 · 挑个大脑</a>。',
 			},
 		],
 	},
@@ -90,7 +90,7 @@ const groups: Group[] = [
 			},
 			{
 				q: 'Memory 和 Skills 有什么区别？',
-				a: '两者都是 Hermes 的"持久状态"，职责分明：<ul><li><b>Memory（事实记忆）</b>——关于你和你项目的事实：你的名字、偏好、正在做的项目、过去对话里提过的任何内容。按相关度自动检索。</li><li><b>Skills（程序记忆）</b>——完成某类任务的操作步骤，例如"部署 Next.js 到 Vercel"、"生成周报"、"排查 nginx 502"。遇到相似任务时 Hermes 会自动调用。</li></ul>一句话：Memory 回答"你知道什么"，Skills 回答"你会做什么"。两者跨会话、跨模型都保留。',
+				a: '两者都是 Hermes 的"持久状态"，职责分明：<ul><li><b>Memory（事实记忆）</b>——关于你和你项目的事实：你的名字、偏好、正在做的项目、过去对话里提过的任何内容。按相关度自动检索。</li><li><b>Skills（程序记忆）</b>——完成某类任务的操作步骤，例如"部署 Next.js 到 Vercel"、"生成周报"、"排查 nginx 502"。遇到相似任务时 Hermes 会自动调用。</li></ul>一句话：Memory 回答"你知道什么"，Skills 回答"你会做什么"。两者跨会话、跨模型都保留。Memory 实战见 <a href="/7-days/day-06/">Day 6 · 记忆与状态</a>，Skills 实战见 <a href="/7-days/day-05/">Day 5 · 教它新本事</a>。',
 			},
 		],
 	},
@@ -101,15 +101,15 @@ const groups: Group[] = [
 		items: [
 			{
 				q: '我的数据会上传到哪？隐私怎么保证？',
-				a: '<b>API 请求只发到你配置的 LLM 提供商</b>——Nous Research 不收集任何遥测数据。对话记录、记忆、Skills 全部存在本地 <code>~/.hermes/</code> 目录下的 SQLite 数据库。<ul><li>完全不想联网？配本地模型即可（见上一组 Q8）</li><li>想要加密备份？直接打包 <code>~/.hermes/</code> 就行</li><li>企业合规场景？搭私有 OpenAI-compatible endpoint（比如自部署 vLLM），公司数据不出内网</li></ul>',
+				a: '<b>API 请求只发到你配置的 LLM 提供商</b>——Nous Research 不收集任何遥测数据。对话记录、记忆、Skills 全部存在本地 <code>~/.hermes/</code> 目录下的 SQLite 数据库。<ul><li>完全不想联网？配本地模型即可（见上一组 Q8）</li><li>想要加密备份？直接打包 <code>~/.hermes/</code> 就行</li><li>企业合规场景？搭私有 OpenAI-compatible endpoint（比如自部署 vLLM），公司数据不出内网</li></ul>内置工具与 endpoint 配置详见 <a href="/7-days/day-04/">Day 4 · 调用内置工具</a>。',
 			},
 			{
 				q: '装完了跑 hermes 报 command not found 怎么办？',
-				a: '安装器把 <code>hermes</code> 装到 <code>~/.local/bin/</code>，但这个路径不在所有 shell 的默认 PATH 里。两步解决：<ol><li><code>source ~/.zshrc</code>（或 <code>~/.bashrc</code>）重新加载 shell 配置；或干脆关掉终端开一个新的。</li><li>还不行就 <code>echo $PATH</code> 确认是否包含 <code>~/.local/bin</code>。没有就手动把 <code>export PATH="$HOME/.local/bin:$PATH"</code> 加到 profile 文件末尾。</li></ol>',
+				a: '安装器把 <code>hermes</code> 装到 <code>~/.local/bin/</code>，但这个路径不在所有 shell 的默认 PATH 里。两步解决：<ol><li><code>source ~/.zshrc</code>（或 <code>~/.bashrc</code>）重新加载 shell 配置；或干脆关掉终端开一个新的。</li><li>还不行就 <code>echo $PATH</code> 确认是否包含 <code>~/.local/bin</code>。没有就手动把 <code>export PATH="$HOME/.local/bin:$PATH"</code> 加到 profile 文件末尾。</li></ol>装机踩坑合集见 <a href="/7-days/day-01/">Day 1 · 安装 Hermes</a>。',
 			},
 			{
 				q: '出问题了怎么排查？有哪些诊断工具？',
-				a: '三板斧：<ul><li><code>hermes doctor</code>——官方自带诊断命令，会逐项检查依赖、配置、模型连通性，告诉你缺什么、哪里错了、怎么修。</li><li><code>~/.hermes/logs/</code>——所有运行日志，按日期滚动，排查网关连接问题首先看这里。</li><li><a href="https://hermes-agent.nousresearch.com/docs/reference/faq/">官方 FAQ & Troubleshooting</a>——覆盖 WSL systemd 不稳定、WhatsApp 断连、MCP 工具不显示、Telegram 日志过载等常见场景。</li></ul>最常见的 429 限流错误：等几秒重试、升级套餐，或 <code>hermes chat --provider &lt;备用&gt;</code> 临时切到其他提供商。',
+				a: '三板斧：<ul><li><code>hermes doctor</code>——官方自带诊断命令，会逐项检查依赖、配置、模型连通性，告诉你缺什么、哪里错了、怎么修。</li><li><code>~/.hermes/logs/</code>——所有运行日志，按日期滚动，排查网关连接问题首先看这里。</li><li><a href="https://hermes-agent.nousresearch.com/docs/reference/faq/">官方 FAQ & Troubleshooting</a>——覆盖 WSL systemd 不稳定、WhatsApp 断连、MCP 工具不显示、Telegram 日志过载等常见场景。</li></ul>最常见的 429 限流错误：等几秒重试、升级套餐，或 <code>hermes chat --provider &lt;备用&gt;</code> 临时切到其他提供商。全自动化运行与诊断流程见 <a href="/7-days/day-07/">Day 7 · 全自动化与诊断</a>。',
 			},
 		],
 	},
@@ -145,7 +145,7 @@ const breadcrumb = breadcrumbSchema([
 		<div class="intro-inner">
 			<div class="big">H/04</div>
 			<h1>Hermes Agent 中文 <span class="accent">FAQ</span></h1>
-			<p class="sub">新用户、自托管玩家、OpenClaw 迁移者最常问的 14 个问题。答案基于官方文档与作者亲测，随 Hermes 版本持续更新。</p>
+			<p class="sub">新用户、自托管玩家、OpenClaw 迁移者最常问的 14 个问题。答案基于官方文档与作者亲测。</p>
 		</div>
 	</section>
 
