@@ -1,18 +1,19 @@
-/* src/styles/fonts.css — self-hosted font stack for H industrial theme */
+/* src/styles/fonts.css — 文档层（Starlight）使用的字体栈
+ *
+ * 注意：营销层（src/pages/*.astro，使用 MarketingLayout）从 2026-04-28 起
+ *   不再 import 此文件，改用 src/styles/marketing-fonts.css。
+ *   修改字体策略时务必同步两边。
+ */
+
 @import '@fontsource-variable/bricolage-grotesque';
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/500.css';
 @import '@fontsource/ibm-plex-mono/700.css';
-@import '@fontsource/ibm-plex-sans/400.css';
-@import '@fontsource/ibm-plex-sans/500.css';
-@import '@fontsource/ibm-plex-sans/700.css';
 @import '@fontsource/noto-sans-sc/400.css';
-@import '@fontsource/noto-sans-sc/500.css';
-@import '@fontsource/noto-sans-sc/700.css';
 
 :root {
 	--font-display: 'Bricolage Grotesque Variable', system-ui, sans-serif;
-	--font-body: 'IBM Plex Sans', 'Noto Sans SC', -apple-system, sans-serif;
+	--font-body: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', -apple-system, sans-serif;
 	--font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
-	--font-cjk: 'Noto Sans SC', 'PingFang SC', sans-serif;
+	--font-cjk: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
 }
