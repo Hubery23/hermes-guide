@@ -54,7 +54,7 @@ const {
 
 		{/* 关键首屏样式：仅含 H token、字体栈、body 基础。
 		    组件级 scoped 样式（hero/spec-card 等）已被 Astro 自动 inline 在 head 后段。 */}
-		<style is:global>
+		<style is:global is:inline>
 			:root {
 				--sand: #e8e2d4;
 				--sand-dark: #d9d2bf;
@@ -114,7 +114,7 @@ const {
 	</body>
 </html>
 
-<style is:global>
+<style is:global is:inline>
 	main { min-height: 60vh; }
 	a { color: inherit; }
 	.btn {
