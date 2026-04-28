@@ -6,8 +6,13 @@ import SiteFooter from '@components/SiteFooter.astro';
 import SEO from '@components/SEO.astro';
 import Schema from '@components/Schema.astro';
 import { websiteSchema, organizationSchema } from '@lib/schemas';
-import '@styles/fonts.css';
-import '@styles/theme.css';
+// 营销层不再直接 import theme.css / fonts.css。
+// 它们改为通过 <link rel="preload" as="style"> 异步加载，避免阻塞首屏渲染。
+import marketingCssUrl from '@styles/marketing.css?url';
+import marketingFontsCssUrl from '@styles/marketing-fonts.css?url';
+// 显式 preload hero 用到的 Bricolage Grotesque latin 子集。
+// fontsource 包内文件路径稳定，可直接用 ?url 拿构建后的 hash 名。
+import bricolageLatinUrl from '@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2?url';
 
 interface Props {
 	locale: Locale;
@@ -47,12 +52,50 @@ const {
 			noindex={noindex}
 		/>
 
+		{/* 关键首屏样式：仅含 H token、字体栈、body 基础。
+		    组件级 scoped 样式（hero/spec-card 等）已被 Astro 自动 inline 在 head 后段。 */}
+		<style is:global>
+			:root {
+				--sand: #e8e2d4;
+				--sand-dark: #d9d2bf;
+				--paper: #f4efe1;
+				--ink: #2b2b2e;
+				--ink-soft: #44444a;
+				--tang: #f5713a;
+				--amber: #e8c547;
+				--font-display: 'Bricolage Grotesque Variable', system-ui, sans-serif;
+				--font-body: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', -apple-system, sans-serif;
+				--font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+				--font-cjk: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+			}
+			* { box-sizing: border-box; }
+			html, body { margin: 0; padding: 0; }
+			body {
+				background: var(--sand);
+				color: var(--ink);
+				font-family: var(--font-body);
+				line-height: 1.5;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
+			}
+			h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
+			code, pre, .mono { font-family: var(--font-mono); }
+		</style>
+
+		{/* 主样式 + 字体样式：异步加载 */}
+		<link rel="preload" as="style" href={marketingCssUrl} onload="this.onload=null;this.rel='stylesheet'" />
+		<noscript><link rel="stylesheet" href={marketingCssUrl} /></noscript>
+		<link rel="preload" as="style" href={marketingFontsCssUrl} onload="this.onload=null;this.rel='stylesheet'" />
+		<noscript><link rel="stylesheet" href={marketingFontsCssUrl} /></noscript>
+
+		{/* preload Bricolage 主可变字重，确保 hero LCP 文字字体可用 */}
+		<link rel="preload" as="font" type="font/woff2" href={bricolageLatinUrl} crossorigin />
+
 		{/* Favicon 家族 */}
 		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 		<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
 		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
-		<link rel="manifest" href="/site.webmanifest" />
 		<meta name="theme-color" content="#e8e2d4" />
 
 		{/* 全站基础结构化数据 */}
@@ -66,19 +109,12 @@ const {
 			<slot />
 		</main>
 		<SiteFooter locale={locale} />
+		{/* PWA manifest 放 body 末，避免占用 head 关键路径 */}
+		<link rel="manifest" href="/site.webmanifest" />
 	</body>
 </html>
 
 <style is:global>
-	* { box-sizing: border-box; }
-	html, body { margin: 0; padding: 0; }
-	body {
-		background: var(--sand);
-		color: var(--ink);
-		font-family: var(--font-body);
-		line-height: 1.5;
-		-webkit-font-smoothing: antialiased;
-	}
 	main { min-height: 60vh; }
 	a { color: inherit; }
 	.btn {
