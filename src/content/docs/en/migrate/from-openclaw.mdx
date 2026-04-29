@@ -1,43 +1,327 @@
 ---
 title: "Leaving OpenClaw: A Smooth Migration"
-description: "Author-tested crosswalk from OpenClaw to Hermes Agent concepts."
-head:
-  - tag: meta
-    attrs:
-      name: robots
-      content: noindex,follow
+description: "One hermes claw migrate command handles SOUL.md, skills, config, API keys, and platform tokens. Includes a concept mapping table and manual rebuild checklist."
 sources:
+  - title: "Hermes Agent · Migrate from OpenClaw"
+    url: "https://hermes-agent.nousresearch.com/docs/guides/migrate-from-openclaw"
+  - title: "Hermes Agent · CLI Commands"
+    url: "https://hermes-agent.nousresearch.com/docs/reference/cli-commands/"
   - title: "OpenClaw official docs"
     url: "https://openclaw.ai"
-  - title: "Hermes Agent official docs"
-    url: "https://hermes-agent.nousresearch.com/docs/"
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Steps } from '@astrojs/starlight/components';
 
-<Aside type="caution" title="English version coming soon">
-The Chinese version is live [here](/migrate/). Translations welcome via [GitHub](https://github.com/Hubery23/hermes-guide).
+## Who this guide is for
+
+Users currently on OpenClaw who want to switch to Hermes and **keep their existing persona, skills, memories, and bot tokens** without starting from scratch.
+
+If you've never used OpenClaw, skip this guide. If you want to get Hermes running first and come back later, start with the [7-Day Tutorial](/en/7-days/).
+
+<Aside type="tip" title="Back up first, then migrate">
+  Before doing anything, do two things:
+
+  1. **`cp -r ~/.openclaw ~/.openclaw.bak-$(date +%F)`** — manual backup
+  2. Run `hermes claw migrate --dry-run` first to preview what will be migrated and catch conflicts
+
+  The official tool **copies** files rather than moving them, but it's still worth keeping your own copy.
 </Aside>
 
-## Concept crosswalk
+---
 
-| OpenClaw | → | Hermes Agent |
-|---|---|---|
-| Skills | → | Skills System |
-| Integrations | → | Toolsets + MCP |
-| Heartbeats | → | Scheduled Tasks |
-| Persistent Memory | → | Memory System |
-| Bot Framework | → | Messaging Platforms |
+## Five-minute overview
 
-## Migration steps (WIP)
+OpenClaw and Hermes concepts map 1:1, and there's an official migration tool that handles most of it in one pass:
 
-1. Backup OpenClaw skills dir and memory snapshot
-2. Install Hermes (see [Day 01](/en/7-days/day-01/))
-3. Map each skill to Hermes skill-hub format
-4. Restore memory and sessions
-5. Switch messaging platform bindings
+```bash
+hermes claw migrate --dry-run    # preview — no files changed
+hermes claw migrate              # execute
+hermes claw cleanup              # after verification, clean up OpenClaw remnants (optional)
+```
 
-## Sources
+By default, the tool migrates: SOUL.md, memories, skills, provider config, platform tokens, MCP servers, and session policies. **This covers the most common case** — just three commands.
 
-- OpenClaw: https://openclaw.ai
-- Hermes Agent: https://hermes-agent.nousresearch.com/docs/
+The rest of this guide explains what's happening, where things can go wrong, and what requires manual handling.
+
+---
+
+## Concept mapping table
+
+Get both sets of terminology aligned before you start:
+
+| OpenClaw | → | Hermes Agent | Notes |
+|---|---|---|---|
+| `SOUL.md` (persona) | → | `~/.hermes/SOUL.md` | Direct copy, formats are compatible |
+| `IDENTITY.md` | → | Merge into `SOUL.md` | Archived — **requires manual merge** |
+| `AGENTS.md` (project-level instructions) | → | `AGENTS.md` in your project directory | Requires `--workspace-target` |
+| `MEMORY.md` + `USER.md` + diary files | → | `~/.hermes/memories/` | Merged into the new memory system |
+| Skills (4 locations: workspace / managed / personal / project) | → | `~/.hermes/skills/openclaw-imports/` | All consolidated into one directory |
+| Integrations (plugins) | → | Toolsets + MCP servers | Partly automatic, partly manual |
+| Heartbeats (recurring tasks) | → | Cron jobs | **Requires manual rebuild** (see below) |
+| `HEARTBEAT.md` | → | Cron job description text | Archived — **requires manual rewrite** |
+| `BOOTSTRAP.md` | → | Context file or skill | Archived — **requires manual rewrite** |
+| `TOOLS.md` | → | Not migrated | Hermes has built-in tool documentation |
+| Bot platform config (TG/DC/Slack/...) | → | `*_BOT_TOKEN` / `*_ALLOWED_USERS` in `~/.hermes/.env` | Automatic |
+| Session reset policy | → | `session_reset` in `config.yaml` | Automatic |
+| MCP servers | → | `mcp_servers` in `config.yaml` | Automatic, stdio + HTTP/SSE |
+| Persistent Memory | → | Memory System | See [Day 6](/en/7-days/day-06/) |
+
+---
+
+## Migration steps
+
+<Steps>
+
+1. **Run a dry-run first**
+
+   ```bash
+   hermes claw migrate --dry-run
+   ```
+
+   The output is a **change plan**: what will be migrated, how conflicts are handled, what will be archived. **Read it before executing** — a few minutes now can save an hour of rollback later.
+
+   If OpenClaw is installed in a non-default path:
+
+   ```bash
+   hermes claw migrate --dry-run --source /path/to/your/.openclaw
+   ```
+
+2. **Decide whether to migrate API keys**
+
+   The default preset is `full`, which migrates API keys from OpenClaw (OpenRouter / OpenAI / Anthropic / DeepSeek / Gemini, etc.) alongside everything else.
+
+   For a more cautious approach (migrating on a different machine, or taking the opportunity to rotate keys), use `user-data`:
+
+   ```bash
+   hermes claw migrate --preset user-data
+   ```
+
+   This skips API keys and migrates everything else. Re-add keys manually afterward: `hermes config set ANTHROPIC_API_KEY ...`
+
+3. **Handle skill name conflicts**
+
+   If you already have a skill in Hermes with the same name as one in OpenClaw (e.g. `code-review` on both sides), the default strategy is `skip` (keep your current version). Other options:
+
+   ```bash
+   hermes claw migrate --skill-conflict rename     # rename the OpenClaw version before migrating
+   hermes claw migrate --skill-conflict overwrite  # overwrite Hermes version with OpenClaw's (use with caution)
+   ```
+
+4. **Execute**
+
+   ```bash
+   hermes claw migrate
+   ```
+
+   For non-interactive use (in scripts), add `--yes` to skip prompts — but don't do this on the first run.
+
+   At completion, a migration report is printed:
+
+   ```
+   ✓ SOUL.md migrated
+   ✓ memories: 3 files merged (MEMORY.md, USER.md, 2026-04-*.md)
+   ✓ skills: 12 migrated, 2 skipped (conflict: skip), 1 archived
+   ✓ providers: anthropic, openrouter, deepseek
+   ✓ bots: telegram, discord
+   ✓ mcp_servers: 4
+   ⚠ 6 items archived to ~/.hermes/migration/openclaw/2026-04-23-221532/archive/
+   ```
+
+5. **Check the archive directory**
+
+   ```bash
+   ls ~/.hermes/migration/openclaw/*/archive/
+   ```
+
+   This contains items **the tool wasn't confident enough to handle automatically** — you'll need to rebuild them selectively (see next section). Leaving them untouched is fine for now — they're just not yet in Hermes.
+
+6. **Restart the gateway (if platform tokens were migrated)**
+
+   ```bash
+   # Linux / macOS user service
+   systemctl --user restart hermes-gateway
+
+   # Or the straightforward way
+   hermes gateway stop && hermes gateway start
+   ```
+
+   **WhatsApp requires a fresh QR code scan:**
+
+   ```bash
+   hermes whatsapp
+   ```
+
+7. **Verify**
+
+   ```bash
+   hermes status --deep       # check provider auth and platform connections
+   hermes skills list         # confirm all skills are present
+   hermes gateway status      # gateway and all bots connected
+   ```
+
+   Start Hermes and test:
+   - Does `SOUL.md` take effect? (Does the personality feel right?)
+   - Did memories carry over? (Ask about something it should know from the OpenClaw era)
+   - Trigger a migrated skill (using Day 5's trigger methods)
+
+8. **Clean up after verification**
+
+   ```bash
+   hermes claw cleanup
+   ```
+
+   This removes the OpenClaw config directory. **Don't rush** — run Hermes for a day or two first to confirm nothing is missing.
+
+</Steps>
+
+---
+
+## Items requiring manual rebuild
+
+The following are archived by the tool and won't be auto-migrated:
+
+### `IDENTITY.md` → merge into `SOUL.md`
+
+The two files serve overlapping purposes; Hermes only recognizes `SOUL.md`. Open `IDENTITY.md` from the archive directory, manually copy over any still-relevant sections to `~/.hermes/SOUL.md`, and check for contradictions.
+
+### Heartbeats / `HEARTBEAT.md` → rewrite as cron jobs
+
+OpenClaw's heartbeat mechanism corresponds to **cron jobs** in Hermes (see [Day 7](/en/7-days/day-07/)).
+
+Extract the **intent + frequency** from each heartbeat in `HEARTBEAT.md` and rewrite as a cron job:
+
+```bash
+# Original OpenClaw heartbeat: check RSS summary every day at 9 AM
+hermes cron create "0 9 * * *" "Summarize my RSS subscriptions and send to Telegram"
+```
+
+### `BOOTSTRAP.md` → rewrite as a context file or skill
+
+OpenClaw's bootstrap typically means "do X at the start of every session." Hermes has two options:
+
+- Simple startup instructions → put them in `AGENTS.md` (project-level) or `SOUL.md` (global)
+- Complex multi-step workflows → write a skill (see [Day 5 advanced section](/en/7-days/day-05/#advanced-write-your-own-skill-5-minute-version))
+
+### Old cron jobs / plugins / webhooks
+
+OpenClaw's scheduled tasks, custom plugins, and external webhooks don't go through `hermes claw migrate`'s automatic path. Rebuild using the corresponding mechanism in Hermes:
+
+| OpenClaw | Hermes equivalent |
+|---|---|
+| Scheduled tasks | `hermes cron create ...` ([Day 7](/en/7-days/day-07/)) |
+| Custom tools | Toolsets or MCP servers |
+| Webhook receivers | Gateway webhook mode or a custom MCP server |
+
+### Complex channel config (multiple accounts, routing rules)
+
+The tool only migrates the **primary account's** platform tokens and allowlist. If you had multiple Telegram bots, or per-channel/per-user routing rules in OpenClaw, rebuild manually in `~/.hermes/.env` and `~/.hermes/config.yaml`.
+
+---
+
+## Quick reference: common flags
+
+```bash
+# Dry-run (strongly recommended first)
+hermes claw migrate --dry-run
+
+# Presets
+hermes claw migrate                         # = --preset full (default, includes API keys)
+hermes claw migrate --preset user-data      # excludes API keys
+
+# Paths
+hermes claw migrate --source /custom/.openclaw
+hermes claw migrate --workspace-target /path/to/project   # where to put AGENTS.md
+
+# Conflict handling
+hermes claw migrate --skill-conflict skip        # default
+hermes claw migrate --skill-conflict rename
+hermes claw migrate --skill-conflict overwrite
+hermes claw migrate --overwrite                  # overwrite all conflicts (use with caution)
+
+# Automation
+hermes claw migrate --yes                        # skip confirmations (for scripts)
+```
+
+---
+
+## Troubleshooting
+
+<Aside type="danger" title="'OpenClaw directory not found'">
+  The tool defaults to `~/.openclaw`. If yours is in a different location, add `--source`:
+
+  ```bash
+  hermes claw migrate --source /path/to/.openclaw
+  ```
+
+  Not sure where it is? Search: `find / -name "SOUL.md" -path "*openclaw*" 2>/dev/null`
+</Aside>
+
+<Aside type="danger" title="'No provider API keys found'">
+  OpenClaw may store keys in four locations — the tool checks in priority order:
+
+  1. `openclaw.json` config fields
+  2. `~/.openclaw/.env`
+  3. The `env` sub-object in config
+  4. `auth-profiles.json`
+
+  If you used `source: "file"` or `source: "exec"` dynamic SecretRef, **the tool won't resolve those automatically**. Add them manually after migration:
+
+  ```bash
+  hermes config set ANTHROPIC_API_KEY sk-ant-xxx
+  ```
+</Aside>
+
+<Aside type="danger" title="Skills don't appear after migration">
+  Migrated skills land in `~/.hermes/skills/openclaw-imports/`. The **skills list loads at session startup**, so:
+
+  1. Exit and re-enter Hermes
+  2. `/skills` to see the list
+  3. Still not there? `ls ~/.hermes/skills/openclaw-imports/` to confirm the files exist
+  4. Files exist but not listed → `hermes skills audit` to rescan
+</Aside>
+
+<Aside type="danger" title="TTS voice changed or silent after migration">
+  OpenClaw TTS settings may be in three locations — the tool checks in priority order:
+
+  1. `messages.tts.providers.*` (new format)
+  2. `talk.providers.*` (old format fallback)
+  3. Older flat keys
+
+  Voice IDs selected through the OpenClaw UI sometimes don't auto-migrate. Add manually:
+
+  ```bash
+  hermes config set tts.elevenlabs.voice_id YOUR_VOICE_ID
+  ```
+</Aside>
+
+<Aside type="danger" title="Gateway won't connect to Telegram after migration">
+  90% of the time: the token was migrated but the gateway wasn't restarted.
+
+  ```bash
+  hermes gateway stop && hermes gateway start
+  # or
+  systemctl --user restart hermes-gateway
+  ```
+
+  Still not working: `hermes logs gateway --since 5m -f` — you'll typically see a specific 401 / DNS / network error.
+</Aside>
+
+<Aside type="note" title="Can I migrate only part of my config?">
+  Yes. `--preset user-data` skips API keys; `--skill-conflict skip` protects your existing skills; running the migration scripts individually for specific files also works (e.g. just copy `SOUL.md` and reconfigure everything else manually).
+
+  You don't have to do it all in one pass. Run the tool multiple times if needed — it's idempotent, and re-running at most outputs "nothing to do."
+</Aside>
+
+<Aside type="note" title="Can I still use OpenClaw after migration?">
+  Yes. Migration **copies**, not moves — OpenClaw's original config is untouched. Running both simultaneously will cause state divergence (e.g. the same Telegram bot gets grabbed by both), which isn't recommended long-term.
+
+  Suggested transition: stop OpenClaw's gateway, run Hermes's. After a stable week with no issues, run `hermes claw cleanup`.
+</Aside>
+
+---
+
+## What to do after migration
+
+1. Walk through the [7-Day Tutorial](/en/7-days/) — not to re-learn, but to verify "these features actually work under Hermes"
+2. Read [Day 7](/en/7-days/day-07/) to rewrite all your heartbeats as cron jobs
+3. Use [Day 6](/en/7-days/day-06/)'s `hermes backup` to take an initial snapshot of the new setup — that way you have a quick rollback point if anything surfaces later

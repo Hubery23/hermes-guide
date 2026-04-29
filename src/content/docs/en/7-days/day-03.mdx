@@ -1,32 +1,432 @@
 ---
-title: "Go Social: Messaging Platforms"
-description: "Bot token + .env, chat with Hermes in real chat apps."
+title: "Day 3 · Move In: WeChat / Telegram / Discord / Slack"
+description: "Get Hermes talking in the messaging app you use every day. WeChat for China, Telegram internationally, Discord / Slack covered in branches."
 day: 3
+duration: "30–45 min"
 milestone: false
-head:
-  - tag: meta
-    attrs:
-      name: robots
-      content: noindex,follow
 sources:
-  - title: "Hermes Agent official docs"
-    url: "https://hermes-agent.nousresearch.com/docs/"
+  - title: "Hermes Agent · Messaging Gateway"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/messaging"
+  - title: "Hermes Agent · Weixin (WeChat)"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/weixin"
+  - title: "Hermes Agent · WeCom"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/wecom"
+  - title: "Hermes Agent · Telegram"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/telegram"
+  - title: "Hermes Agent · Discord"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/discord"
+  - title: "Hermes Agent · Slack"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/slack"
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Steps } from '@astrojs/starlight/components';
 
-<Aside type="caution" title="English version coming soon">
-The Chinese version is live [here](/7-days/day-03/). Translations welcome via [GitHub](https://github.com/Hubery23/hermes-guide).
+## Today's Goal
+
+Get Hermes running inside **the messaging app you actually use** — WeChat if that's your daily driver, Telegram otherwise. Finish one main track today and you'll be able to @ Hermes from your phone and get a reply.
+
+---
+
+## Prerequisites
+
+- Day 2 complete — `hermes` can hold a conversation in the terminal
+- Choose **one** platform to start. Not sure which?
+  - **Daily WeChat user** → Track 1 (WeChat)
+  - **Want the lowest barrier** → Track 2 (Telegram)
+  - Discord / Slack → scroll down to the Branch sections
+
+<Aside type="caution" title="Connect one platform first, then add more">
+  The gateway supports multiple platforms simultaneously, but **start with one channel and verify it works**. When something goes wrong, you need to know whether the fault is the channel itself, the credentials, or the allowlist.
 </Aside>
 
-## What this chapter covers
+---
 
-(Coming soon.)
+## First: the gateway is a separate process
 
-## Expected output
+Hermes talks in messaging apps through the **messaging gateway** — a long-running process independent of the `hermes` CLI. Its job is to translate messages from each platform into conversations Hermes can handle.
 
-(The observable result after completing this chapter will be listed here.)
+```
+┌──────────────┐     ┌────────────────────┐     ┌────────────┐
+│ WeChat /     │ ←→ │ hermes gateway     │ ←→ │ Hermes     │
+│ Telegram /   │     │ (long-running)     │     │ core (LLM) │
+│ Discord /    │     └────────────────────┘     └────────────┘
+│ Slack ...    │
+└──────────────┘
+```
 
-## Sources
+Two things this means:
 
-- Hermes Agent official docs: https://hermes-agent.nousresearch.com/docs/
+1. **Closing `hermes` in the terminal has no effect on the gateway** — they're independent processes.
+2. **The gateway must keep running** for the bot to stay online. You can run it in the foreground (`hermes gateway`) or install it as a system service (`hermes gateway install`).
+
+<Aside type="caution" title="Default allowlist: strangers can't get in">
+  The gateway **rejects** all users not on the allowlist by default. This is intentional security design — your bot has access to a terminal-capable AI; leaving it open to anyone is a serious risk. When a stranger DMs your bot, they receive a pairing code. You approve it with `hermes pairing approve` before they can through.
+</Aside>
+
+---
+
+## Track 1: WeChat (primary for China · 30–45 min)
+
+<Aside type="note" title="This uses iLink Bot long-polling">
+  The official WeChat adapter uses **iLink Bot API + HTTP long-polling** (35-second timeout). No public IP, no webhook, no tunneling required — a home MacBook or a cloud server both work. Credentials bind to a **personal WeChat account** (a secondary account is fine). For enterprise WeChat, see the [WeCom section](#enterprise-wechat-wecom) below.
+</Aside>
+
+### Step 1: Install dependencies
+
+The WeChat adapter needs two extra Python packages:
+
+```bash
+pip install aiohttp cryptography
+# For QR code rendering directly in the terminal (recommended):
+pip install "hermes-agent[messaging]"
+```
+
+### Step 2: Run the setup wizard and scan to log in
+
+```bash
+hermes gateway setup
+```
+
+Select **Weixin** when the wizard asks for a platform. Then:
+
+<Steps>
+
+1. The terminal shows a QR code (if you installed `hermes-agent[messaging]`), or gives you an image path
+2. **Scan the QR code with your phone's WeChat**
+3. Tap "Confirm login" on your phone
+4. The wizard writes `account_id`, `token`, and `base_url` to `~/.hermes/.env`; credentials land in `~/.hermes/weixin/accounts/` (plaintext — don't commit to git)
+
+</Steps>
+
+After the wizard finishes, `.env` will look like:
+
+```bash
+WEIXIN_ACCOUNT_ID=xxxxxxxx
+WEIXIN_TOKEN=xxxxxxxxxxxxxxxxxxxxxx
+WEIXIN_DM_POLICY=pairing
+WEIXIN_HOME_CHANNEL=              # fill in if you want to send proactive notifications
+```
+
+<Aside type="tip" title="Use a secondary account, not your main one">
+  The iLink Bot runs on a personal WeChat account. Official guidance recommends **creating a new secondary WeChat account** for the bot — reasons: ① if your main account gets flagged, it affects your daily social life; ② the bot's message frequency in groups is unpredictable; a secondary account limits the damage.
+</Aside>
+
+### Step 3: Tighten access policy
+
+The default at first login is `dm_policy=pairing` (anyone can DM and go through the pairing flow). For daily use, switch to `allowlist` so only you and specific people can chat:
+
+```bash
+# ~/.hermes/.env
+WEIXIN_DM_POLICY=allowlist
+WEIXIN_ALLOWED_USERS=wxid_xxxxxxxxxxxx    # your own WeChat wxid
+```
+
+Don't know your `wxid`? **Start the gateway and send the bot a message.** The logs print the sender's wxid — copy it and paste it back.
+
+<Aside type="caution" title="Group chat is disabled by default">
+  `group_policy` **defaults to `disabled`** — intentional design, because high-frequency messages from a personal WeChat account in a group are very likely to trigger a risk flag. To enable a specific group:
+
+  ```bash
+  WEIXIN_GROUP_POLICY=allowlist
+  WEIXIN_ALLOWED_GROUPS=<group ID>   # grab from logs after startup
+  ```
+</Aside>
+
+### Step 4: Start the gateway
+
+```bash
+hermes gateway
+```
+
+A log line like this means it's working:
+
+```
+gateway online · weixin connected · account=xxxx · long-poll=35s
+```
+
+### Step 5: Chat in WeChat
+
+Open your bot's WeChat account on your phone (or open a DM with it) and send:
+
+```
+Hello, what time is it?
+```
+
+The bot should reply with the current time. If there's no response, check the Troubleshooting section below.
+
+### Step 6: Install as a background service (recommended)
+
+Running in the foreground is fine for testing. For 24/7 uptime:
+
+```bash
+hermes gateway install
+hermes gateway start
+hermes gateway status
+```
+
+---
+
+### WeChat media and message limits
+
+| Capability | Notes |
+|-----------|-------|
+| Images / video / files / voice | All supported. Tencent CDN's AES-128-ECB encryption is decrypted automatically by the gateway |
+| Single message length | Up to **4000 characters**; longer messages are split at natural boundaries |
+| Markdown links | The gateway renders `[text](url)` as a tappable reference card in WeChat |
+| Proactive push | Set `WEIXIN_HOME_CHANNEL` to push messages from cron jobs or scheduled tasks to that conversation |
+
+---
+
+### Enterprise WeChat (WeCom)
+
+If you're connecting **WeCom** (enterprise WeChat) rather than personal WeChat, the path is different:
+
+| Dimension | Personal WeChat (Weixin) | Enterprise WeChat (WeCom) |
+|-----------|--------------------------|---------------------------|
+| Adapter | `weixin` (iLink Bot) | `wecom` |
+| Transport | HTTP long-polling | **WebSocket long connection** |
+| Credentials | QR code login, stateful token | Create an AI Bot in the admin portal, get `BOT_ID` / `SECRET` |
+| Group chat default | `disabled` | `open` (enterprise context expects it) |
+| Encryption | AES-128-ECB | AES-256-CBC |
+
+Setup is the same: `hermes gateway setup`, then select WeCom. The `.env` changes to:
+
+```bash
+WECOM_BOT_ID=your-bot-id
+WECOM_SECRET=your-secret
+```
+
+Full steps: [official WeCom docs](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/wecom).
+
+---
+
+## Track 2: Telegram (30 min)
+
+<Steps>
+
+1. **Register a bot with BotFather**
+
+   Search for **@BotFather** in Telegram or open [t.me/BotFather](https://t.me/BotFather), then send:
+
+   ```
+   /newbot
+   Hermes Agent        ← display name (anything)
+   my_hermes_bot       ← username (must end in "bot", globally unique)
+   ```
+
+   BotFather returns a token like `123456789:ABCdef...`. **This is your bot's password** — treat it like a secret key.
+
+2. **Find your Telegram user ID**
+
+   The gateway allowlist uses your **numeric user ID**, not your username. Search for **@userinfobot** in Telegram, send any message, and it returns your ID (e.g. `987654321`).
+
+3. **Run the configuration wizard**
+
+   Back in the terminal:
+
+   ```bash
+   hermes gateway setup
+   ```
+
+   The wizard asks: which platform (select Telegram) → paste the token → paste the allowed user ID. It writes to `~/.hermes/.env` automatically:
+
+   ```bash
+   TELEGRAM_BOT_TOKEN=123456789:ABCdef...
+   TELEGRAM_ALLOWED_USERS=987654321
+   ```
+
+   <Aside type="tip" title="Manual config works too">
+     Skip the wizard and write to `~/.hermes/.env` directly. `hermes config set` also works — it detects that this is a secret and routes it to `.env` instead of `config.yaml`.
+   </Aside>
+
+4. **Start the gateway (foreground)**
+
+   ```bash
+   hermes gateway
+   ```
+
+   A log line like `gateway online · telegram connected` means it's working. **Don't close this terminal** — closing it takes the bot offline.
+
+5. **Chat in Telegram**
+
+   Open the bot you just created (the BotFather response includes a `t.me/xxx` link), tap Start, then send:
+
+   ```
+   Hello, what time is it?
+   ```
+
+   Expected response: the bot replies with the current time and mentions it used the terminal tool to check.
+
+6. **Install as a background service (optional but recommended)**
+
+   Same commands as WeChat Track Step 6: `hermes gateway install && hermes gateway start`.
+
+</Steps>
+
+### Telegram group chats: privacy mode and @mentions
+
+After adding your bot to a group, it will **not see most messages** by default — this is Telegram's privacy mode: the bot can only see `/` commands, direct replies to its messages, and messages that @mention it.
+
+Two options:
+
+| Option | How | Effect |
+|--------|-----|--------|
+| **Keep privacy mode** (recommended) | Leave the setting alone; trigger with `@my_hermes_bot question` | Bot only responds when @mentioned — no spam |
+| **Disable privacy mode** | BotFather → `/mybots` → Bot Settings → Group Privacy → Turn off, then **kick and re-add the bot** | Bot sees all messages. Combine with `require_mention: true` to avoid random replies |
+
+After disabling privacy mode, use this `~/.hermes/config.yaml` snippet to limit responses:
+
+```yaml
+telegram:
+  require_mention: true
+  mention_patterns:
+    - "^\\s*hermes\\b"   # also trigger on "hermes" without @
+```
+
+---
+
+## Branch: Discord key steps
+
+<Aside type="note" title="Checklist only — see official docs for full steps">
+  Discord setup is more involved than Telegram (4–5 toggles in the Developer Portal). Below are the most common failure points. Full steps: [Discord Setup](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/discord).
+</Aside>
+
+1. **Create an Application + Bot**: [Discord Developer Portal](https://discord.com/developers/applications) → New Application → Bot (sidebar) → Reset Token (**shown only once — copy it immediately**).
+
+2. **Enable two Privileged Intents** (90% of "bot doesn't reply" issues come from missing these):
+   - **Server Members Intent**
+   - **Message Content Intent** ← without this, the bot receives message events but the text is empty
+
+3. **Invite the bot to your server** using the recommended permissions integer **`274878286912`** (send messages, read history, attach files, add reactions, etc.):
+
+   ```
+   https://discord.com/oauth2/authorize?client_id=YOUR_APP_ID&scope=bot+applications.commands&permissions=274878286912
+   ```
+
+4. **Find your user ID**: Discord Settings → Advanced → enable Developer Mode → right-click your name → Copy User ID.
+
+5. **`.env` entries needed**:
+
+   ```bash
+   DISCORD_BOT_TOKEN=...
+   DISCORD_ALLOWED_USERS=your_user_id
+   ```
+
+6. Run `hermes gateway setup` and select Discord, or start directly with `hermes gateway`.
+
+---
+
+## Branch: Slack key steps
+
+<Aside type="note" title="Slack uses Socket Mode — no public URL needed">
+  Hermes connects to Slack via a WebSocket long connection, so **no public domain or tunneling is required** — a home machine works fine. Full steps: [Slack Setup](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/slack).
+</Aside>
+
+Create an app at [api.slack.com/apps](https://api.slack.com/apps), then:
+
+| Step | Key point |
+|------|-----------|
+| OAuth & Permissions | Add at minimum: `chat:write`, `app_mentions:read`, `channels:history`, `im:history`, `im:write`, `users:read`, `files:read`, `files:write` |
+| Socket Mode | Enable the toggle, generate an **App-Level Token** (starts with `xapp-`) |
+| Event Subscriptions | Subscribe to `message.im`, `message.channels`, `app_mention` ← **90% of "bot doesn't respond" issues are a missing subscription here** |
+| Install to Workspace | Generates the **Bot Token** (starts with `xoxb-`) |
+
+Write both tokens to `~/.hermes/.env`:
+
+```bash
+SLACK_BOT_TOKEN=xoxb-...
+SLACK_APP_TOKEN=xapp-...
+SLACK_ALLOWED_USERS=U01XXXXX   # Slack user ID, not username
+```
+
+Finally, run `/invite @Hermes Agent` in the target channel — without this, the bot won't see that channel's messages.
+
+---
+
+## Expected Output
+
+Regardless of platform, completion looks like:
+
+```
+$ hermes gateway status
+● gateway:  running
+● weixin:   connected     # or telegram / discord / slack
+● session:  ready
+```
+
+Then in your chosen messaging app:
+
+```
+You: @Hermes Which is larger: 9.8 or 9.11?
+Hermes: 9.8 is larger. Since 9.8 = 9.80 and 9.11 = 9.11, we have 9.80 > 9.11.
+```
+
+---
+
+## Troubleshooting
+
+<Aside type="danger" title="Bot doesn't reply (general order of investigation)">
+  1. `hermes gateway status` — is the process still alive?
+  2. `hermes gateway` (foreground restart) — any errors in the startup logs?
+  3. Check tokens — any extra spaces or quotes in `.env`?
+  4. Confirm your user ID / wxid is in `*_ALLOWED_USERS`
+</Aside>
+
+<Aside type="danger" title="WeChat: errcode=-14 / session expired">
+  iLink session credentials have a lifespan. Long inactivity or being kicked from your phone triggers `errcode=-14`. Fix:
+
+  ```bash
+  hermes gateway stop
+  hermes gateway setup    # scan QR code again
+  hermes gateway start
+  ```
+
+  Credentials live in `~/.hermes/weixin/accounts/`. Re-scanning overwrites the old ones — no manual cleanup needed.
+</Aside>
+
+<Aside type="danger" title="WeChat: QR code refreshed 3 times but still failed to scan">
+  The wizard auto-refreshes the QR code up to 3 times (about 2 minutes each). After timeout, press `Ctrl+C` and re-run `hermes gateway setup`. Usually caused by distance from the screen or a small terminal QR code — installing `hermes-agent[messaging]` renders a sharper vector QR code directly in the terminal.
+</Aside>
+
+<Aside type="danger" title="WeChat: two gateway instances fighting over the same account">
+  One WeChat credential maps to one iLink session. If you start the gateway on two machines with the same account simultaneously, they'll kick each other out. Either use two separate WeChat accounts (recommended), or use `hermes gateway stop` to shut down one side first.
+</Aside>
+
+<Aside type="caution" title="WeChat: @mentioned the bot in a group but no response">
+  99% of the time this is `WEIXIN_GROUP_POLICY=disabled` (the default). See **Step 3 "Group chat is disabled by default"** above — start the gateway, send a message in the group, grab the `chat_id` from the logs, and add it to the config.
+</Aside>
+
+<Aside type="danger" title="Discord: message received but Hermes can't see the content">
+  99% of the time **Message Content Intent is not enabled**. Discord Developer Portal → Bot → Privileged Gateway Intents → enable Message Content Intent, then **restart the gateway** (no need to re-invite the bot).
+</Aside>
+
+<Aside type="danger" title="Slack: bot joined the channel but doesn't respond to @mentions">
+  Check Event Subscriptions — verify `app_mention` and `message.channels` are subscribed. **Changing Slack Event Subscriptions doesn't require reinstalling the app, but the gateway does need a restart.**
+</Aside>
+
+<Aside type="danger" title="Telegram: bot in a group can't receive messages">
+  Privacy mode is on and you're not using the `@bot_name ...` format. Two options: use @ to trigger, or disable privacy mode and then **kick the bot from the group and re-add it** (the setting only takes effect after re-adding).
+</Aside>
+
+<Aside type="note" title="A stranger DMed my bot and I got a pairing code prompt?">
+  This is the gateway's built-in protection: users not on the allowlist don't get a reply, but you (the admin) receive a pairing code. To approve:
+
+  ```bash
+  hermes pairing approve weixin ABC123       # or telegram / discord / slack
+  ```
+
+  Pairing codes expire after 1 hour. To disable this mechanism: set `GATEWAY_ALLOW_ALL_USERS=true` in `.env` — **but since the bot has terminal access, opening it to everyone is a serious risk**. Only do this if you know what you're doing.
+</Aside>
+
+<Aside type="note" title="When does the session state reset?">
+  Default rules: reset after idle for a set duration (WeChat 180 min, Telegram 240 min, Discord 60 min), or at a fixed daily time (default 4:00 AM). To change, edit `~/.hermes/gateway.json`:
+
+  ```json
+  {
+    "reset_by_platform": {
+      "weixin":   { "mode": "idle", "idle_minutes": 120 },
+      "telegram": { "mode": "idle", "idle_minutes": 60 }
+    }
+  }
+  ```
+</Aside>

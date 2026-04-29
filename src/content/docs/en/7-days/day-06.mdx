@@ -1,32 +1,267 @@
 ---
-title: "Memory & State: Sessions, Compression, Backup"
-description: "Make Hermes remember what you said yesterday."
+title: "Day 6 · Memory and State: Sessions, Compression, Backup"
+description: "Have Hermes remember yesterday's conversation, compress a long context into a resumable summary, and take a full backup."
 day: 6
+duration: "30 min"
 milestone: false
-head:
-  - tag: meta
-    attrs:
-      name: robots
-      content: noindex,follow
 sources:
-  - title: "Hermes Agent official docs"
-    url: "https://hermes-agent.nousresearch.com/docs/"
+  - title: "Hermes Agent · Memory"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/features/memory"
+  - title: "Hermes Agent · Sessions"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/sessions"
+  - title: "Hermes Agent · CLI Commands"
+    url: "https://hermes-agent.nousresearch.com/docs/reference/cli-commands/"
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Steps } from '@astrojs/starlight/components';
 
-<Aside type="caution" title="English version coming soon">
-The Chinese version is live [here](/7-days/day-06/). Translations welcome via [GitHub](https://github.com/Hubery23/hermes-guide).
+## Today's Goal
+
+Have Hermes proactively remember one piece of information about you, compress a long conversation into a summary that carries into a new session, and take a full backup.
+
+---
+
+## Prerequisites
+
+Day 2 complete. Having some prior conversations with Hermes helps — the session demos in this chapter need existing history.
+
+---
+
+## First: Hermes memory has three layers
+
+Most people picture memory as one big bucket. Hermes actually has three independent systems:
+
+| Layer | Location | Stores | When read/written |
+|-------|----------|--------|------------------|
+| **Long-term memory** | `~/.hermes/memories/MEMORY.md` `~/.hermes/memories/USER.md` | Environmental facts, your preferences, cross-session experience | Injected into system prompt **at session startup**; writes during a session don't take effect immediately (prefix cache optimization) |
+| **Session history** | `~/.hermes/sessions/*.jsonl` + `~/.hermes/state.db` (SQLite) | Full messages and tool calls from each conversation | Appended continuously during the session; archived when it ends |
+| **Full-text search index** | SQLite FTS5 index | Searchable copy of all past sessions | The `session_search` tool queries this on demand during conversations |
+
+**Two key design choices to remember:**
+
+1. Long-term memory uses a **frozen snapshot model** — if you tell Hermes "remember this from now on" during a session, it writes to disk, but the new memory **doesn't enter the system prompt until the next session starts**. This maximizes LLM prefix cache usage (faster, cheaper).
+2. `MEMORY.md` has a **2200-character limit**; `USER.md` has **1375 characters**. Hitting the limit forces you to consolidate — intentional design to keep memories concise.
+
+---
+
+## Steps
+
+<Steps>
+
+1. **Check your existing memories**
+
+   ```bash
+   ls ~/.hermes/memories/
+   cat ~/.hermes/memories/MEMORY.md
+   cat ~/.hermes/memories/USER.md
+   ```
+
+   If you haven't configured the memory system before, these files may be empty or freshly created. Initialize:
+
+   ```bash
+   hermes memory setup
+   hermes memory status
+   ```
+
+   `status` shows current usage (character count / limit).
+
+2. **Have Hermes actively remember something**
+
+   Start Hermes and state a clear preference:
+
+   ```
+   You: Remember this: whenever I paste code for review, give feedback in English, not any other language.
+   ```
+
+   Hermes should:
+
+   1. Call the `memory` tool (`add` action)
+   2. Write this preference to `USER.md`
+   3. Reply "Got it — takes effect from the next session"
+
+   <Aside type="caution" title="Current session still uses old behavior">
+     Because of frozen snapshots, newly added memories **don't enter the system prompt until `hermes` restarts**. This is not a bug — it's the design. If you need the behavior to apply immediately in the current session, just say it once in the conversation.
+   </Aside>
+
+3. **Use /compress to condense a long conversation**
+
+   If you've been talking for a while (context approaching the model limit), or you want to switch topics without losing what came before:
+
+   ```
+   You: /compress
+   ```
+
+   Hermes will:
+
+   1. Read the full current conversation
+   2. Generate a structured summary (preserving key decisions, to-dos, verified facts)
+   3. Write the summary to long-term memory
+   4. **Create a continuation session** — a new session starting from that summary
+
+   Focus the summary with a parameter:
+
+   ```
+   You: /compress --focus "progress on the login module refactor"
+   ```
+
+   <Aside type="tip" title="When to use /compress">
+     - When you see a token limit warning
+     - When the session has lots of exploratory noise and you want to keep the conclusions, not the process
+     - When you want to "hand off" a conversation to another task (or another person)
+
+     Don't compress frequently. Every compression is an information loss.
+   </Aside>
+
+4. **Name your session (/title)**
+
+   Hermes auto-titles sessions after the first exchange. Override manually:
+
+   ```
+   You: /title Hermes Tutorial Day 6
+   ```
+
+   Limit: 100 characters max, globally unique, control characters stripped.
+
+5. **Browse history and resume sessions**
+
+   Back in the terminal:
+
+   ```bash
+   hermes sessions list              # shows the last 20 by default
+   hermes sessions list --limit 50
+   hermes sessions list --source telegram   # filter by platform
+   hermes sessions stats             # total count, message volume, database size
+   ```
+
+   Three levels of granularity for resuming:
+
+   ```bash
+   hermes --continue             # most recent CLI session
+   hermes -c                     # same, shorthand
+   hermes -c "Project A"         # find the latest session matching that title (A → A #2 → A #3)
+   hermes --resume 7e4f2b8c      # resume by exact session ID
+   ```
+
+6. **View and search past conversations**
+
+   Inside a conversation, `/history` shows the full scroll of the current session:
+
+   ```
+   You: /history
+   ```
+
+   For cross-session search, use the `session_search` tool — Hermes calls it automatically, but you can prompt it:
+
+   ```
+   You: Last week we discussed a K8s operator design. Help me find it.
+   ```
+
+   Hermes calls `session_search` to run a full-text query against the SQLite FTS5 index and summarizes matching passages.
+
+7. **Take a full backup**
+
+   Hermes stores config, skills, sessions, cron jobs, and credentials all under `~/.hermes/`. Back up the whole state:
+
+   ```bash
+   hermes backup                                 # default: ~/hermes-backup-<timestamp>.zip
+   hermes backup -o /tmp/hermes.zip              # specify output path
+   hermes backup --quick                         # core state only (config + state.db + .env + cron)
+   hermes backup --quick --label "pre-upgrade"   # safety snapshot before an upgrade
+   ```
+
+   <Aside type="tip" title="Why backup works while Hermes is running">
+     SQLite runs in WAL mode; the backup uses the `backup()` API for a consistent snapshot — **no need to stop Hermes**. A direct `cp state.db` would be different — it might capture a partial write.
+   </Aside>
+
+8. **Restore a backup**
+
+   ```bash
+   hermes import hermes-backup-2026.04.15.zip
+   hermes import backup.zip --force   # overwrite existing files without prompting
+   ```
+
+   <Aside type="caution" title="It's import, not restore">
+     The official command is `hermes import`, not `hermes restore`. Easy to confuse — now you know.
+   </Aside>
+
+</Steps>
+
+---
+
+## Advanced: external memory providers
+
+If the built-in memory isn't enough (knowledge-graph retrieval across hundreds of sessions, or shared long-term memory across a team), you can attach an external provider:
+
+| Provider | Best for |
+|----------|----------|
+| **Mem0** | Lightweight cloud service, simple API |
+| **Honcho** | User modeling for AI agents |
+| **Supermemory** | Browser and note aggregation search |
+| OpenViking / Hindsight / Holographic / RetainDB / ByteRover | Various specialized use cases |
+
+External providers are **additive, not replacements** — the built-in `MEMORY.md` is always the primary source; external providers supplement with semantic retrieval. Full config: official Memory docs.
+
+---
+
+## Expected Output
+
+```
+$ hermes memory status
+MEMORY.md:  1423 / 2200 chars (64%)
+USER.md:    672  / 1375 chars (48%)
+
+$ hermes sessions list --limit 3
+● 2026-04-23 21:10  Hermes Tutorial Day 6          cli      24 messages
+● 2026-04-23 20:05  Login module refactor          cli      89 messages (compressed)
+● 2026-04-23 19:30  Login module refactor #2       cli      11 messages
+
+$ hermes backup --quick --label "day6-done"
+✓ state.db (WAL-safe copy)
+✓ config.yaml / .env
+✓ cron jobs
+✓ credentials
+Archive: ~/hermes-backup-day6-done.zip (2.1 MB)
+```
+
+---
+
+## Troubleshooting
+
+<Aside type="danger" title="hermes memory setup reports 'memory full'">
+  `MEMORY.md` or `USER.md` has hit its limit. Consolidate manually:
+
+  ```bash
+  $EDITOR ~/.hermes/memories/MEMORY.md   # merge related entries, delete stale ones
+  hermes memory status                    # confirm usage is below 80%
+  ```
+
+  Or ask Hermes: `You: Clean up MEMORY.md — merge duplicate entries`
 </Aside>
 
-## What this chapter covers
+<Aside type="danger" title="Can't find the original session after /compress">
+  The original session **was not deleted** — Hermes just jumped to the continuation session. Use `hermes sessions list` to find the original session ID, then `hermes --resume <id>` to go back.
+</Aside>
 
-(Coming soon.)
+<Aside type="danger" title="Backup file is huge (hundreds of MB)">
+  Session history has accumulated. Two options:
 
-## Expected output
+  ```bash
+  # Prune sessions older than 30 days
+  hermes sessions prune --older-than 30
 
-(The observable result after completing this chapter will be listed here.)
+  # Or take a quick backup without session history
+  hermes backup --quick
+  ```
+</Aside>
 
-## Sources
+<Aside type="note" title="Can I edit MEMORY.md manually?">
+  Yes. It's plain Markdown — edit freely. As long as you don't exceed the character limit or introduce control characters, Hermes reads it as-is on next startup.
 
-- Hermes Agent official docs: https://hermes-agent.nousresearch.com/docs/
+  **Don't** write secrets or credentials into `MEMORY.md` — memory content goes directly into the system prompt, meaning every conversation carries that data through the model.
+</Aside>
+
+<Aside type="note" title="Syncing ~/.hermes/ across machines">
+  Don't put `~/.hermes/` directly into a cloud sync folder — `state.db` is SQLite, and concurrent writes from multiple machines will corrupt it.
+
+  Recommended approach: run `hermes backup` regularly and put the zip in cloud storage. Restore with `hermes import` on the new machine.
+</Aside>

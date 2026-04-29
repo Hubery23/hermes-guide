@@ -1,32 +1,261 @@
 ---
-title: "Give It Hands: Using Built-in Tools"
-description: "Invoke at least 2 built-in tools with real side effects."
+title: "Day 4 · Give It Hands: Search, Terminal, Browser"
+description: "Hermes ships with 47+ built-in tools. Today you'll run the three most useful: web_search, terminal, and browser."
 day: 4
+duration: "30 min"
 milestone: false
-head:
-  - tag: meta
-    attrs:
-      name: robots
-      content: noindex,follow
 sources:
-  - title: "Hermes Agent official docs"
-    url: "https://hermes-agent.nousresearch.com/docs/"
+  - title: "Hermes Agent · Tools & Toolsets"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/features/tools"
+  - title: "Hermes Agent · Browser Automation"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/features/browser"
+  - title: "Hermes Agent · Tool Gateway"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/features/tool-gateway"
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Steps } from '@astrojs/starlight/components';
 
-<Aside type="caution" title="English version coming soon">
-The Chinese version is live [here](/7-days/day-04/). Translations welcome via [GitHub](https://github.com/Hubery23/hermes-guide).
+## Today's Goal
+
+In a single conversation, have Hermes invoke at least **2 built-in tools** (terminal + web_search recommended) and observe it deciding *which tool to use and why*.
+
+---
+
+## Prerequisites
+
+- Day 2 complete — the main conversation works
+- Chrome installed on this machine (needed for the browser section; the first two tools don't require it)
+
+---
+
+## Tools ≠ Skills
+
+A common source of confusion early on:
+
+| | Tool | Skill |
+|---|---|---|
+| Granularity | Low: one atomic capability | High: a reusable workflow |
+| Examples | `web_search`, `terminal`, `read_file` | `code-review`, `daily-standup` |
+| Who decides to use it | **Hermes itself**, based on the conversation | You trigger explicitly (`/skill-name`) or Hermes infers from context |
+| Where it's defined | Built-in, ships with every release | Community packages, installed from Skills Hub |
+
+Today is about tools. Skills are Day 5.
+
+---
+
+## Steps
+
+<Steps>
+
+1. **See which tools are available**
+
+   Inside a conversation:
+
+   ```
+   /tools list
+   ```
+
+   Or in the terminal (after exiting a session):
+
+   ```bash
+   hermes tools --summary
+   ```
+
+   You'll see tools grouped by **toolset**. Core toolsets include:
+
+   | Toolset | What's inside |
+   |---------|--------------|
+   | `web` | `web_search`, `web_extract` — search the web and extract page content |
+   | `terminal` | `terminal`, `process`, `read_file`, `patch` — shell execution, file read/write |
+   | `browser` | `browser_navigate`, `browser_snapshot`, `browser_vision` — drive Chrome |
+   | `vision` | `vision_analyze` — image understanding |
+   | `memory` | `memory`, `session_search` — read/write long-term memory (Day 6) |
+   | `todo` | `todo` — manage task lists |
+   | `cronjob` | `cronjob` — scheduled tasks (Day 7) |
+
+2. **Try the terminal tool**
+
+   You already used this in Day 1, but today we watch it consciously:
+
+   ```
+   You: Use the terminal to count how many .md files are in the current directory
+   ```
+
+   Hermes should:
+   1. **Tell you what command it's about to run** (something like `find . -name "*.md" | wc -l`)
+   2. **Wait for you to confirm** (dangerous commands always require confirmation; ordinary commands can be set to auto-approve)
+   3. Return the result
+
+   <Aside type="caution" title="The approval mechanism is intentional — don't disable it wholesale">
+     Hermes requires manual approval by default for commands that can make changes (rm, mv, sudo, network requests, etc.). Don't disable this for convenience — even your own commands can go wrong accidentally, let alone an AI's.
+   </Aside>
+
+3. **Try web_search — first resolve the API key**
+
+   Hermes's web search defaults to **Firecrawl** (a professional web-scraping SaaS). Three options:
+
+   | Option | How to configure | Best for |
+   |--------|-----------------|----------|
+   | Firecrawl cloud | `hermes config set FIRECRAWL_API_KEY fc-xxx` (register at [firecrawl.dev](https://firecrawl.dev)) | Easiest, okay with cloud calls |
+   | Self-hosted Firecrawl | Start with Docker, then `hermes config set FIRECRAWL_API_URL http://localhost:3002` | High privacy requirements, 4–8 GB free RAM |
+   | Nous Tool Gateway | Nous Portal subscription — tool routing happens automatically | Already paying for Nous Portal |
+   | Nothing configured | Falls back to built-in `duckduckgo-search` (free but lower quality) | Just trying it out, low frequency |
+
+   <Aside type="tip" title="Start with Firecrawl's free tier">
+     Firecrawl gives free credits on signup, no credit card required. Try it first and decide later whether to upgrade or self-host.
+   </Aside>
+
+4. **Try web_search**
+
+   With the key configured, start Hermes and ask something that requires current information:
+
+   ```
+   You: Search for the release timeline of Claude 4 in 2025
+   ```
+
+   Hermes should:
+   1. Recognize this requires internet access (post-training-cutoff information)
+   2. Call `web_search`
+   3. Follow up with `web_extract` to pull content from a few result pages
+   4. Summarize with citations
+
+   The reply should include citation markers like `[1]` `[2]` linking to the source pages. That's your confirmation the tool call succeeded.
+
+5. **Try the browser tool — first launch Chrome with CDP**
+
+   The browser tool works via **Chrome DevTools Protocol (CDP)**: Hermes connects to a Chrome instance running with a debug port open and drives it through the protocol. **Chrome must be running before Hermes can connect.**
+
+   **macOS:**
+
+   ```bash
+   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+     --remote-debugging-port=9222 \
+     --user-data-dir="$HOME/.hermes/chrome-debug" \
+     --no-first-run &
+   ```
+
+   **Linux:**
+
+   ```bash
+   google-chrome \
+     --remote-debugging-port=9222 \
+     --user-data-dir="$HOME/.hermes/chrome-debug" \
+     --no-first-run &
+   ```
+
+   <Aside type="caution" title="--user-data-dir is critical">
+     **Without `--user-data-dir`:** if Chrome is already running, the new instance gets absorbed by the existing process — a new window appears but nothing listens on port 9222. A separate user data directory creates a completely isolated Chrome profile, independent from your daily browser.
+   </Aside>
+
+6. **Connect and use the browser**
+
+   Inside a Hermes conversation:
+
+   ```
+   You: /browser connect
+   ```
+
+   Should reply `Connected to ws://localhost:9222`. Then give it a task:
+
+   ```
+   You: Open https://news.ycombinator.com and tell me the titles and links of the top 5 posts on the front page.
+   ```
+
+   Hermes will call `browser_navigate` → `browser_snapshot` (reads the accessibility tree) → summarize the results. You can **watch it click** in that Chrome window in real time.
+
+   When done:
+
+   ```
+   You: /browser disconnect
+   ```
+
+   This closes the CDP connection and returns Hermes to its default mode.
+
+7. **Enable different tools per platform**
+
+   You probably don't want a Telegram bot executing shell commands. `hermes tools` (in the terminal, not inside a conversation) opens an **interactive per-platform configuration interface**:
+
+   ```bash
+   hermes tools
+   ```
+
+   Typical security configuration:
+
+   | Platform | Enabled toolsets |
+   |----------|----------------|
+   | CLI (local terminal) | All |
+   | Telegram / Discord / Slack | `web`, `memory`, `todo` only — **disable `terminal` and `browser`** |
+   | WebUI | `web`, `browser`, `vision` |
+
+   This config lives in the `toolsets` field in `~/.hermes/config.yaml` and can be edited by hand.
+
+</Steps>
+
+---
+
+## Expected Output
+
+A complete conversation should show Hermes autonomously selecting and invoking tools:
+
+```
+You: Which releases were merged into NousResearch/hermes-agent this month?
+
+Hermes: Let me check the latest release information.
+  → [tool] web_search: "NousResearch hermes-agent releases 2026"
+  → [tool] web_extract: https://github.com/NousResearch/hermes-agent/releases
+
+Based on the latest data, releases merged this month include ... (sources [1][2])
+```
+
+---
+
+## Troubleshooting
+
+<Aside type="danger" title="web_search returns nothing / Firecrawl unauthorized error">
+  1. Check that `FIRECRAWL_API_KEY` in `~/.hermes/.env` starts with `fc-`
+  2. Or switch to the built-in fallback: `hermes config set tools.web.fallback duckduckgo-search`
+  3. Nous Portal subscribers should see tools automatically routed through Portal — no manual Firecrawl config needed
 </Aside>
 
-## What this chapter covers
+<Aside type="danger" title="/browser connect: Connection refused">
+  Chrome isn't running, or it wasn't started with `--remote-debugging-port=9222`. Check:
 
-(Coming soon.)
+  ```bash
+  # Should show a process listening on 9222
+  lsof -i :9222
+  ```
 
-## Expected output
+  Still nothing: **close all Chrome windows** and restart using the command in Step 5.
+</Aside>
 
-(The observable result after completing this chapter will be listed here.)
+<Aside type="danger" title="/browser commands don't work in Telegram">
+  `/browser` is a **CLI interaction command**, not an LLM instruction, so it won't work through the gateway (Telegram/Discord/Slack). On messaging platforms you can only use tool instructions like `browser_navigate` — and in most cases you wouldn't want a remote bot opening a browser anyway.
+</Aside>
 
-## Sources
+<Aside type="note" title="Terminal keeps prompting for approval — annoying">
+  Add safe command prefixes to the allowlist:
 
-- Hermes Agent official docs: https://hermes-agent.nousresearch.com/docs/
+  ```yaml
+  # ~/.hermes/config.yaml
+  terminal:
+    auto_approve_prefixes:
+      - "git status"
+      - "git diff"
+      - "ls"
+      - "pwd"
+  ```
+
+  **Don't** add `rm`, `mv`, `curl | bash`, or `sudo` — the extra keypress is worth it.
+</Aside>
+
+<Aside type="note" title="Want isolated sandbox execution?">
+  The `terminal` tool supports swapping the backend to run commands inside a container:
+
+  ```yaml
+  terminal:
+    backend: docker      # or ssh / modal / daytona
+    timeout: 180
+  ```
+
+  If Docker is installed, this is the easiest isolation option — Hermes can't touch your system files.
+</Aside>
