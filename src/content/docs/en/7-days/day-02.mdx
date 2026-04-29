@@ -1,32 +1,210 @@
 ---
-title: "Pick a Brain: Model & API Setup"
-description: "Configure an LLM backend and API keys."
+title: "Day 2 · Pick a Brain: Model Selection and API Setup"
+description: "Choose a provider, configure your API key, and send your first meaningful message to Hermes."
 day: 2
+duration: "20 min"
 milestone: false
-head:
-  - tag: meta
-    attrs:
-      name: robots
-      content: noindex,follow
 sources:
-  - title: "Hermes Agent official docs"
-    url: "https://hermes-agent.nousresearch.com/docs/"
+  - title: "Hermes Agent · AI Providers"
+    url: "https://hermes-agent.nousresearch.com/docs/integrations/providers"
+  - title: "Hermes Agent · Configuration"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/configuration"
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Steps } from '@astrojs/starlight/components';
 
-<Aside type="caution" title="English version coming soon">
-The Chinese version is live [here](/7-days/day-02/). Translations welcome via [GitHub](https://github.com/Hubery23/hermes-guide).
+## Today's Goal
+
+Configure a provider and model, then send Hermes a reasoning question and get the correct answer.
+
+---
+
+## Prerequisites
+
+Day 1 complete — the `hermes` command runs without errors.
+
+---
+
+## Two commands — don't mix them up
+
+Hermes has two "model commands" with completely different jobs:
+
+| Command | Where to run | What it does |
+|---------|-------------|--------------|
+| `hermes model` | **Terminal** (outside Hermes) | Full wizard: add a provider, enter API key, OAuth login, set default model |
+| `/model` | **Inside a Hermes conversation** | Quick-switch between already-configured providers only — cannot add new ones |
+
+**For first-time setup or adding a new provider, use `hermes model`.** Exit your current session first (`Ctrl+C` or `/quit`), then run it in a regular terminal.
+
+---
+
+## Steps
+
+<Steps>
+
+1. **Choose a provider**
+
+   Find your row:
+
+   | Your situation | Recommended provider | How to configure |
+   |----------------|---------------------|-----------------|
+   | Have a Kimi API key | `kimi-coding` | Set `KIMI_API_KEY` in `.env` |
+   | Have a DeepSeek key | `deepseek` | Set `DEEPSEEK_API_KEY` in `.env` |
+   | Have a Qwen (Alibaba) key | `alibaba` (Qwen) | Set `DASHSCOPE_API_KEY` in `.env` |
+   | Have a GLM (Zhipu) key | `zai` | Set `GLM_API_KEY` in `.env` |
+   | First time, want the easiest start | Nous Portal | `hermes model` → OAuth |
+   | Have an Anthropic API key | `anthropic` | `hermes model` → enter key |
+   | Have ChatGPT / OpenAI | `openai-codex` | `hermes model` → OAuth |
+   | Have a GitHub Copilot subscription | `copilot` | `hermes model` → OAuth (no extra cost) |
+   | Want to route multiple models | OpenRouter | Set `OPENROUTER_API_KEY` in `.env` |
+   | Local private deployment | Custom endpoint (Ollama) | `hermes model` → Custom endpoint |
+
+   <Aside type="caution" title="Minimum context requirement: 64K tokens">
+     Hermes requires a model with at least a 64,000-token context window. All major models (Claude, GPT, Gemini, Qwen, DeepSeek, Kimi) meet this. For local Ollama models, specify the context size at launch: `ollama run qwen2.5-coder -c 65536`.
+   </Aside>
+
+2. **Run the configuration wizard**
+
+   ```bash
+   hermes model
+   ```
+
+   The wizard walks you through: choose provider → enter API key (or OAuth browser login) → select default model from the list → save to config.
+
+   Prefer writing config by hand? Use `hermes config set` directly:
+
+   ```bash
+   # Example: Kimi (swap the key name and provider name for any other provider)
+   hermes config set KIMI_API_KEY sk-xxx
+   hermes config set model.provider kimi-coding
+   hermes config set model.default kimi-for-coding
+   ```
+
+   <Aside type="tip" title="hermes config set routes automatically">
+     API keys go to `~/.hermes/.env`; non-secret settings go to `~/.hermes/config.yaml`. You don't need to decide which file to write.
+   </Aside>
+
+3. **Verify your config**
+
+   View the full active configuration:
+
+   ```bash
+   hermes config
+   ```
+
+   Hermes stores everything under `~/.hermes/`:
+
+   ```
+   ~/.hermes/
+   ├── config.yaml   ← non-secret settings (provider name, model name, feature flags, etc.)
+   └── .env          ← secrets (API keys, bot tokens, etc. — never commit to git)
+   ```
+
+4. **Verify: send a reasoning test**
+
+   Start Hermes:
+
+   ```bash
+   hermes
+   ```
+
+   Send a classic decimal reasoning test:
+
+   ```
+   You: Which is larger: 9.8 or 9.11?
+   ```
+
+   **Correct answer:** Hermes should reply that 9.8 is larger, with reasoning (9.8 = 9.80 > 9.11).
+
+   If the reply is empty or wrong, the API key is invalid or the model is misconfigured — see troubleshooting below.
+
+5. **Switch models mid-conversation**
+
+   Inside a conversation, `/model` lets you quickly switch between configured providers and models:
+
+   ```
+   You: /model
+   ```
+
+   Add `--global` to persist the switch to `config.yaml`; without it, the switch lasts only for the current session:
+
+   ```
+   You: /model deepseek/deepseek-chat --global
+   ```
+
+   Check current token usage:
+
+   ```
+   You: /usage
+   ```
+
+</Steps>
+
+---
+
+## About helper tools and OpenRouter
+
+<Aside type="note" title="Vision and web tools use a helper model">
+  Even if your main provider is Kimi or DeepSeek, Hermes's **web summarization and image analysis** tools call a helper model by default (Gemini Flash via OpenRouter). To enable these tools, add an OpenRouter key:
+
+  ```bash
+  hermes config set OPENROUTER_API_KEY sk-or-v1-xxx
+  ```
+
+  This is optional. Without it, conversations work normally — web and vision tools simply won't be available.
 </Aside>
 
-## What this chapter covers
+---
 
-(Coming soon.)
+## Expected Output
 
-## Expected output
+After this chapter, `hermes config` shows your provider and model, and Hermes answers the reasoning test correctly:
 
-(The observable result after completing this chapter will be listed here.)
+```
+$ hermes config
+Provider:  kimi-coding
+Model:     kimi-for-coding
+Status:    ✓ Connected
 
-## Sources
+$ hermes
+You: Which is larger: 9.8 or 9.11?
+Hermes: 9.8 is larger. Since 9.8 = 9.80 and 9.11 = 9.11, we have 9.80 > 9.11.
+```
 
-- Hermes Agent official docs: https://hermes-agent.nousresearch.com/docs/
+---
+
+## Troubleshooting
+
+<Aside type="danger" title="API key invalid / 401 Unauthorized">
+  Check whether the key is expired or has a typo. Re-enter it:
+
+  ```bash
+  hermes config set KIMI_API_KEY sk-xxx   # replace with your provider's variable name
+  ```
+
+  Then check `~/.hermes/.env` to confirm the value is correct.
+</Aside>
+
+<Aside type="danger" title="Empty reply or 429 Too Many Requests">
+  Rate limit or insufficient account balance. Two options:
+
+  1. Run `hermes model` and switch to a different provider
+  2. Configure a fallback model so Hermes switches automatically:
+
+  ```yaml
+  # Edit ~/.hermes/config.yaml
+  fallback_model:
+    provider: openrouter
+    model: anthropic/claude-sonnet-4
+  ```
+</Aside>
+
+<Aside type="danger" title="/model only shows one provider's models">
+  `/model` can only switch between already-configured providers — it cannot add new ones. Exit the session, run `hermes model` in the terminal to add other providers, then re-enter the conversation.
+</Aside>
+
+<Aside type="note" title="Free options?">
+  **GitHub Copilot:** Users with an existing Copilot subscription can use it at no extra cost. `hermes model` → select GitHub Copilot → OAuth login.
+
+  **Google Gemini OAuth:** Free quota available, no credit card required. `hermes model` → select "Google Gemini (OAuth)" → log in with your Google account. Note: Hermes will warn that this method may conflict with Google's Terms of Service — you'll need to confirm manually.
+</Aside>

@@ -1,32 +1,287 @@
 ---
-title: "Teach a Trick: Installing Your First Skill"
-description: "Install a skill from the hub and trigger it via chat."
+title: "Day 5 · Teach It a Trick: Install Your First Skill"
+description: "Install a skill from Skills Hub and trigger it via /slash command or natural language."
 day: 5
+duration: "25 min"
 milestone: true
-head:
-  - tag: meta
-    attrs:
-      name: robots
-      content: noindex,follow
 sources:
-  - title: "Hermes Agent official docs"
-    url: "https://hermes-agent.nousresearch.com/docs/"
+  - title: "Hermes Agent · Skills System"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/features/skills"
+  - title: "Skills Hub"
+    url: "https://agentskills.io/"
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Steps } from '@astrojs/starlight/components';
 
-<Aside type="caution" title="English version coming soon">
-The Chinese version is live [here](/7-days/day-05/). Translations welcome via [GitHub](https://github.com/Hubery23/hermes-guide).
+## Today's Goal
+
+Install a skill from Skills Hub that you'll actually use (e.g. `code-review` or `axolotl`), then trigger it in a conversation and get the expected output.
+
+---
+
+## Prerequisites
+
+- Day 2 complete (basic conversation working)
+- Day 4 helps — you'll have a clearer mental model of the tool/skill distinction
+
+---
+
+## Why this day is a milestone
+
+The first four days covered everything Hermes ships with **out of the box**: models, platforms, tools. Today you **add a capability** for the first time. After installing your first skill, Hermes is no longer a generic assistant — it's an **agent customized for your workflow**. That's the inflection point.
+
+---
+
+## Tools vs Skills: one more time
+
+| | Tool (Day 4) | Skill (Day 5) |
+|---|---|---|
+| Who maintains it | Hermes core team, ships with releases | Community + official, independent versioning |
+| Where to find it | Built-in | [agentskills.io](https://agentskills.io/) and other hubs |
+| Where it lives | Pre-installed | `~/.hermes/skills/` |
+| How to trigger | Hermes decides when to call it | `/skill-name` explicit trigger, or Hermes loads it from context |
+
+A skill is fundamentally **a Markdown document (`SKILL.md`) with YAML frontmatter** that tells Hermes "when you encounter this kind of task, follow this procedure." It's a bundled combination of prompt and executable fragments.
+
+---
+
+## Steps
+
+<Steps>
+
+1. **Browse the Skills Hub**
+
+   In the terminal (exit any active conversation first):
+
+   ```bash
+   hermes skills browse
+   ```
+
+   You'll see all available skills grouped by source:
+
+   | Source | What it is |
+   |--------|-----------|
+   | `official` | Hermes official — trusted by default |
+   | `openai/skills` · `anthropics/skills` | Major-vendor official — trusted by default |
+   | `skills-sh/*` | [skills.sh](https://skills.sh/) public directory |
+   | `clawhub` · `lobehub` · custom GitHub | Community |
+
+   Or browse in a browser: [agentskills.io](https://agentskills.io/) or [skills.sh](https://skills.sh/).
+
+2. **Search for a skill you'll actually use**
+
+   ```bash
+   # Keyword search
+   hermes skills search code review
+   hermes skills search kubernetes
+   hermes skills search python
+   ```
+
+   Search spans all configured sources. Limit with `--source`:
+
+   ```bash
+   hermes skills search react --source skills-sh
+   ```
+
+   <Aside type="tip" title="Recommended first skill">
+     Not sure what to install? Try **`official/code-review`**. Run `/code-review` after writing code and it walks through a structured checklist. Almost every developer will find it useful.
+   </Aside>
+
+3. **Preview (strongly recommended before installing)**
+
+   Installing a skill means pulling someone else's `SKILL.md` and scripts to your machine and authorizing Hermes to execute them. **Read before you install** — this is basic hygiene in the agent world:
+
+   ```bash
+   hermes skills inspect openai/skills/k8s
+   ```
+
+   The output shows:
+
+   - Frontmatter (what tools and env vars this skill declares)
+   - The main procedure
+   - Required permissions and scripts
+   - Source repository URL
+
+   If the inspect output shows `curl | bash` or calls to unfamiliar external URLs — **don't install it**.
+
+4. **Install**
+
+   ```bash
+   hermes skills install official/code-review
+   ```
+
+   Installation triggers an automatic **security scan**:
+
+   ```
+   Scanning skill for security issues...
+   ✓ No dangerous patterns
+   ✓ No untrusted network calls
+   ✓ Required tools: terminal, read_file (already available)
+   ✓ Installed to ~/.hermes/skills/dev/code-review/
+   ```
+
+   <Aside type="caution" title="Got a policy block?">
+     When an unofficial skill triggers a warning, read it carefully. If you've reviewed the code and are confident it's safe, override with `--force`:
+
+     ```bash
+     hermes skills install some-source/some-skill --force
+     ```
+
+     **`--force` cannot bypass `dangerous`-level warnings** — those either represent real risk or indicate the wrong tool entirely. Don't install them.
+   </Aside>
+
+5. **View installed skills**
+
+   ```bash
+   hermes skills list
+   ```
+
+   Or inside a conversation:
+
+   ```
+   /skills
+   ```
+
+   Every installed skill is **automatically registered as a slash command**: `/code-review`, `/axolotl`, `/k8s`, etc.
+
+6. **Trigger it for the first time**
+
+   Start `hermes`, write any snippet of code (or `cd` into any git repo), then:
+
+   ```
+   You: /code-review
+   ```
+
+   Hermes loads the skill's full content and works through its procedure — it may ask "what part should I review?", then reads files, runs analysis, and delivers structured feedback.
+
+   **Second trigger method: natural language**
+
+   ```
+   You: Give that login function I just wrote a thorough code review
+   ```
+
+   Hermes recognizes this matches the `code-review` skill and loads it automatically.
+
+7. **Update and uninstall**
+
+   ```bash
+   hermes skills check      # see which skills have updates
+   hermes skills update     # update all
+   hermes skills uninstall code-review   # uninstall
+   ```
+
+   <Aside type="note" title="Your edits are never overwritten">
+     Hermes tracks each skill's original hash. Any version you've modified **will never be overwritten by an update** — this is intentional protection of your customizations.
+
+     To re-enable updates for a skill you've edited:
+
+     ```bash
+     hermes skills reset code-review              # keep your edits but allow future updates
+     hermes skills reset code-review --restore    # discard your edits and restore the latest official version
+     ```
+   </Aside>
+
+</Steps>
+
+---
+
+## Advanced: write your own skill (5-minute version)
+
+When you're ready, use this skeleton to get started:
+
+```bash
+mkdir -p ~/.hermes/skills/personal/my-routine
+```
+
+`~/.hermes/skills/personal/my-routine/SKILL.md`:
+
+```markdown
+---
+name: my-routine
+description: My morning standup workflow
+version: 0.1.0
+---
+
+# My Routine
+
+## When to Use
+When I type "/my-routine" or say good morning.
+
+## Procedure
+1. Read yesterday's git log (--since="yesterday")
+2. Read "Today's Plan" from ~/.hermes/memories/MEMORY.md
+3. Use the todo tool to generate a task list for today
+4. Suggest the top three items by priority
+
+## Verification
+Success: output is a prioritized markdown checklist.
+```
+
+Save the file, run `hermes`, type `/skills` — it should appear. `/my-routine` triggers it. Full schema: official docs under "Skills System."
+
+---
+
+## Expected Output
+
+Today's endpoint:
+
+```
+$ hermes skills list
+✓ code-review    (official)    v1.4.2
+✓ k8s            (openai)      v0.8.0
+
+$ hermes
+You: /code-review
+Hermes: Which file or code snippet should I review? (paste code, give a file path, or ask me to scan the whole repo)
+You: review src/auth/login.ts
+Hermes: → [tool] read_file: src/auth/login.ts
+        Running through the code-review checklist:
+        1. [Correctness] ...
+        2. [Security] ...
+        3. [Readability] ...
+```
+
+---
+
+## Troubleshooting
+
+<Aside type="danger" title="hermes skills install: network timeout">
+  Hub fetch failed. Depending on the situation:
+
+  - Entirely blocked: check your proxy (`HTTPS_PROXY` env var), or install directly from GitHub with `--source github`
+  - Single source is slow: `hermes skills browse --source official` pulls only official skills
 </Aside>
 
-## What this chapter covers
+<Aside type="danger" title="/code-review: skill not found">
+  1. `hermes skills list` — did the installation succeed?
+  2. Installed but not visible in conversation: **exit and re-enter the session** — the `/skills` list loads at session startup
+  3. Still missing: `ls ~/.hermes/skills/**/SKILL.md` — confirm the file actually exists
+</Aside>
 
-(Coming soon.)
+<Aside type="danger" title="Skill triggers but reports 'required tool not available'">
+  The skill declares a toolset requirement (e.g. `browser`) that isn't enabled on the current platform. Two options:
 
-## Expected output
+  - Enable that toolset for this platform (`hermes tools`)
+  - Switch to a skill of the same type that doesn't depend on that toolset
+</Aside>
 
-(The observable result after completing this chapter will be listed here.)
+<Aside type="note" title="Official recommended starter pack">
+  Not sure where to begin? These tend to be useful for most developers:
 
-## Sources
+  - `official/code-review` — structured code review
+  - `official/plan` — requirement decomposition and design specs
+  - `official/gif-search` — lightweight GIF finder
+  - `openai/skills/k8s` — if you work with Kubernetes
+</Aside>
 
-- Hermes Agent official docs: https://hermes-agent.nousresearch.com/docs/
+<Aside type="tip" title="Sharing skills with a team">
+  Put shared skills in a git repo and declare it in `~/.hermes/config.yaml`:
+
+  ```yaml
+  skills:
+    external_dirs:
+      - ${SKILLS_REPO}/skills
+  ```
+
+  External directories are **read-only** to Hermes (the agent can't modify them). Local skills with the same name take precedence over external ones.
+</Aside>

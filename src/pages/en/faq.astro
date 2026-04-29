@@ -50,11 +50,11 @@ const groups: Group[] = [
 		items: [
 			{
 				q: 'Does Hermes work on Windows? Do I need WSL?',
-				a: '<b>Native Windows is not supported</b> — you need WSL2. Officially supported: Linux / macOS / WSL2 / Android (Termux). One-liner installer:<br><code>curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash</code><br><b>Don\'t prefix with sudo</b> — the installer writes to <code>~/.local/bin</code>; sudo pushes it to <code>/usr/local/bin</code> and breaks path resolution. If you did, run <code>sudo rm /usr/local/bin/hermes</code> first, then reinstall. Android users replace <code>.[all]</code> with <code>.[termux]</code>. Full install walkthrough: <a href="/7-days/day-01/" hreflang="zh-CN">Day 1 (Chinese)</a>.',
+				a: '<b>Native Windows is not supported</b> — you need WSL2. Officially supported: Linux / macOS / WSL2 / Android (Termux). One-liner installer:<br><code>curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash</code><br><b>Don\'t prefix with sudo</b> — the installer writes to <code>~/.local/bin</code>; sudo pushes it to <code>/usr/local/bin</code> and breaks path resolution. If you did, run <code>sudo rm /usr/local/bin/hermes</code> first, then reinstall. Android users replace <code>.[all]</code> with <code>.[termux]</code>. Full install walkthrough: <a href="/en/7-days/day-01/">Day 1</a>.',
 			},
 			{
 				q: 'Hardware requirements? Can it run on a cheap VPS?',
-				a: 'Depends on where the LLM runs:<ul><li><b>Cloud APIs</b> (OpenAI / OpenRouter / DeepSeek) — a $5 VPS is plenty. All compute is remote.</li><li><b>Fully local</b> — 32B+ parameter models, 24 GB+ VRAM minimum.</li></ul>Hard requirements: <code>Python ≥ 3.11</code>; the chosen model <b>must expose at least 64K tokens of context</b> — anything smaller is rejected at startup (multi-step tool calls won\'t fit). Model selection deep dive: <a href="/7-days/day-02/" hreflang="zh-CN">Day 2 (Chinese)</a>.',
+				a: 'Depends on where the LLM runs:<ul><li><b>Cloud APIs</b> (OpenAI / OpenRouter / DeepSeek) — a $5 VPS is plenty. All compute is remote.</li><li><b>Fully local</b> — 32B+ parameter models, 24 GB+ VRAM minimum.</li></ul>Hard requirements: <code>Python ≥ 3.11</code>; the chosen model <b>must expose at least 64K tokens of context</b> — anything smaller is rejected at startup (multi-step tool calls won\'t fit). Model selection deep dive: <a href="/en/7-days/day-02/">Day 2</a>.',
 			},
 		],
 	},
@@ -73,7 +73,7 @@ const groups: Group[] = [
 			},
 			{
 				q: 'How much does it cost per month?',
-				a: 'The tool is free; cost comes from LLM usage:<ul><li><b>Local models</b> — $0/mo</li><li><b>Chinese APIs</b> (DeepSeek / Kimi / GLM) — $1–5/mo light use</li><li><b>Claude / GPT</b> — $3–15/mo light, $15–70/mo daily deep use</li><li><b>OpenRouter</b> — per-model pricing, swap cheap-to-expensive on demand</li></ul>Savings tip: default to cheap Chinese models; swap to Claude for hard tasks. <code>hermes model</code> switches instantly; memory stays. Multi-provider routing: <a href="/7-days/day-02/" hreflang="zh-CN">Day 2 (Chinese)</a>.',
+				a: 'The tool is free; cost comes from LLM usage:<ul><li><b>Local models</b> — $0/mo</li><li><b>Chinese APIs</b> (DeepSeek / Kimi / GLM) — $1–5/mo light use</li><li><b>Claude / GPT</b> — $3–15/mo light, $15–70/mo daily deep use</li><li><b>OpenRouter</b> — per-model pricing, swap cheap-to-expensive on demand</li></ul>Savings tip: default to cheap Chinese models; swap to Claude for hard tasks. <code>hermes model</code> switches instantly; memory stays. Multi-provider routing: <a href="/en/7-days/day-02/">Day 2</a>.',
 			},
 		],
 	},
@@ -84,11 +84,11 @@ const groups: Group[] = [
 		items: [
 			{
 				q: 'How do I connect Hermes to messaging platforms?',
-				a: 'Built-in Messaging Gateway supports Telegram, Discord, Slack, WhatsApp, iMessage, WeChat (itchat), and WeCom (enterprise). Basic recipe:<ol><li>Enable the channel in <code>~/.hermes/config.yaml</code> (e.g., <code>messaging.telegram.enabled: true</code>)</li><li>Configure an allowlist (only respond to specific users / channels)</li><li>Run <code>hermes gateway run</code> and follow the prompts</li></ol>Full walkthrough: <a href="/7-days/day-03/" hreflang="zh-CN">Day 3 · Go Social (Chinese)</a> — English version still in translation; the Chinese walkthrough is complete. <b>Note</b>: each profile needs its own bot token — profiles can\'t share one.',
+				a: 'Built-in Messaging Gateway supports Telegram, Discord, Slack, WhatsApp, iMessage, WeChat (itchat), and WeCom (enterprise). Basic recipe:<ol><li>Enable the channel in <code>~/.hermes/config.yaml</code> (e.g., <code>messaging.telegram.enabled: true</code>)</li><li>Configure an allowlist (only respond to specific users / channels)</li><li>Run <code>hermes gateway run</code> and follow the prompts</li></ol>Full walkthrough: <a href="/en/7-days/day-03/">Day 3 · Go Social</a>. <b>Note</b>: each profile needs its own bot token — profiles can\'t share one.',
 			},
 			{
 				q: 'What\'s the difference between Memory and Skills?',
-				a: 'Both are persistent across sessions, but with distinct roles:<ul><li><b>Memory (factual)</b> — facts about you and your projects: your name, preferences, ongoing work, anything mentioned in past chats. Auto-retrieved by relevance.</li><li><b>Skills (procedural)</b> — step-by-step how-to for recurring tasks: "deploy Next.js to Vercel", "draft weekly report", "debug nginx 502". Auto-invoked on similar tasks.</li></ul>One-liner: Memory is "what you know"; Skills is "what you can do". Both survive model switches. Memory hands-on: <a href="/7-days/day-06/" hreflang="zh-CN">Day 6 (Chinese)</a>; Skills hands-on: <a href="/7-days/day-05/" hreflang="zh-CN">Day 5 (Chinese)</a>.',
+				a: 'Both are persistent across sessions, but with distinct roles:<ul><li><b>Memory (factual)</b> — facts about you and your projects: your name, preferences, ongoing work, anything mentioned in past chats. Auto-retrieved by relevance.</li><li><b>Skills (procedural)</b> — step-by-step how-to for recurring tasks: "deploy Next.js to Vercel", "draft weekly report", "debug nginx 502". Auto-invoked on similar tasks.</li></ul>One-liner: Memory is "what you know"; Skills is "what you can do". Both survive model switches. Memory hands-on: <a href="/en/7-days/day-06/">Day 6</a>; Skills hands-on: <a href="/en/7-days/day-05/">Day 5</a>.',
 			},
 		],
 	},
@@ -99,15 +99,15 @@ const groups: Group[] = [
 		items: [
 			{
 				q: 'Where does my data go? What about privacy?',
-				a: '<b>API calls only hit the LLM provider you configure</b> — Nous Research collects no telemetry. Conversations, memory, and skills live locally in a SQLite DB under <code>~/.hermes/</code>.<ul><li>Want full offline? Use a local model (see Q above).</li><li>Need encrypted backups? Just tar <code>~/.hermes/</code>.</li><li>Enterprise compliance? Point Hermes at a private OpenAI-compatible endpoint (self-hosted vLLM) — data stays on your network.</li></ul>Built-in tools and endpoint configuration: <a href="/7-days/day-04/" hreflang="zh-CN">Day 4 (Chinese)</a>.',
+				a: '<b>API calls only hit the LLM provider you configure</b> — Nous Research collects no telemetry. Conversations, memory, and skills live locally in a SQLite DB under <code>~/.hermes/</code>.<ul><li>Want full offline? Use a local model (see Q above).</li><li>Need encrypted backups? Just tar <code>~/.hermes/</code>.</li><li>Enterprise compliance? Point Hermes at a private OpenAI-compatible endpoint (self-hosted vLLM) — data stays on your network.</li></ul>Built-in tools and endpoint configuration: <a href="/en/7-days/day-04/">Day 4</a>.',
 			},
 			{
 				q: 'I get "hermes: command not found" after install. Now what?',
-				a: 'The installer writes <code>hermes</code> to <code>~/.local/bin/</code>, which isn\'t in every shell\'s default PATH. Two steps:<ol><li><code>source ~/.zshrc</code> (or <code>~/.bashrc</code>), or just open a fresh terminal.</li><li>Still missing? Run <code>echo $PATH</code>. If <code>~/.local/bin</code> isn\'t in it, append <code>export PATH="$HOME/.local/bin:$PATH"</code> to your profile.</li></ol>Install pitfalls collected: <a href="/7-days/day-01/" hreflang="zh-CN">Day 1 (Chinese)</a>.',
+				a: 'The installer writes <code>hermes</code> to <code>~/.local/bin/</code>, which isn\'t in every shell\'s default PATH. Two steps:<ol><li><code>source ~/.zshrc</code> (or <code>~/.bashrc</code>), or just open a fresh terminal.</li><li>Still missing? Run <code>echo $PATH</code>. If <code>~/.local/bin</code> isn\'t in it, append <code>export PATH="$HOME/.local/bin:$PATH"</code> to your profile.</li></ol>Install pitfalls collected: <a href="/en/7-days/day-01/">Day 1</a>.',
 			},
 			{
 				q: 'Something broke. How do I diagnose it?',
-				a: 'Three tools:<ul><li><code>hermes doctor</code> — the official diagnostic command: checks deps, config, model connectivity, and prints exactly what to fix.</li><li><code>~/.hermes/logs/</code> — rotating logs. Gateway issues are usually visible here.</li><li><a href="https://hermes-agent.nousresearch.com/docs/reference/faq/">Official FAQ & Troubleshooting</a> — covers WSL systemd issues, WhatsApp disconnects, MCP tools not showing, Telegram log spam.</li></ul>For 429 rate-limit: wait, upgrade your plan, or switch providers via <code>hermes chat --provider &lt;alt&gt;</code>. Full automation and diagnostics: <a href="/7-days/day-07/" hreflang="zh-CN">Day 7 (Chinese)</a>.',
+				a: 'Three tools:<ul><li><code>hermes doctor</code> — the official diagnostic command: checks deps, config, model connectivity, and prints exactly what to fix.</li><li><code>~/.hermes/logs/</code> — rotating logs. Gateway issues are usually visible here.</li><li><a href="https://hermes-agent.nousresearch.com/docs/reference/faq/">Official FAQ & Troubleshooting</a> — covers WSL systemd issues, WhatsApp disconnects, MCP tools not showing, Telegram log spam.</li></ul>For 429 rate-limit: wait, upgrade your plan, or switch providers via <code>hermes chat --provider &lt;alt&gt;</code>. Full automation and diagnostics: <a href="/en/7-days/day-07/">Day 7</a>.',
 			},
 		],
 	},
@@ -162,7 +162,7 @@ const breadcrumb = breadcrumbSchema([
 
 	<section class="cta">
 		<h2>Still stuck?</h2>
-		<p>Open an issue on <a href="https://github.com/Hubery23/hermes-guide/issues">GitHub</a>, or walk through <a href="/7-days/day-01/" hreflang="zh-CN">Day 01 (Chinese)</a> end to end.</p>
+		<p>Open an issue on <a href="https://github.com/Hubery23/hermes-guide/issues">GitHub</a>, or walk through <a href="/en/7-days/day-01/">Day 01</a> end to end.</p>
 	</section>
 </MarketingLayout>
 

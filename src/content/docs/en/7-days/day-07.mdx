@@ -1,32 +1,258 @@
 ---
-title: "Full Auto: Scheduling & Diagnostics"
-description: "Natural-language cron; pinpoint typical errors in logs."
+title: "Day 7 · Full Automation and Diagnostics"
+description: "Write a cron job in natural language, run the doctor diagnostic, and close the 7-day loop."
 day: 7
-milestone: false
-head:
-  - tag: meta
-    attrs:
-      name: robots
-      content: noindex,follow
+duration: "30 min"
+milestone: true
 sources:
-  - title: "Hermes Agent official docs"
-    url: "https://hermes-agent.nousresearch.com/docs/"
+  - title: "Hermes Agent · Cron"
+    url: "https://hermes-agent.nousresearch.com/docs/user-guide/features/cron"
+  - title: "Hermes Agent · CLI Commands"
+    url: "https://hermes-agent.nousresearch.com/docs/reference/cli-commands/"
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Steps } from '@astrojs/starlight/components';
 
-<Aside type="caution" title="English version coming soon">
-The Chinese version is live [here](/7-days/day-07/). Translations welcome via [GitHub](https://github.com/Hubery23/hermes-guide).
+## Today's Goal
+
+Two things:
+
+1. **Create a daily scheduled task** — have Hermes send you a morning digest at a fixed time
+2. **Get comfortable with the diagnostic commands** — at minimum: `hermes doctor`, `hermes status`, `hermes logs`
+
+> Coming from OpenClaw? After finishing this chapter, head to [Migrating from OpenClaw](/en/migrate/from-openclaw/) — it's a standalone migration guide.
+
+---
+
+## Prerequisites
+
+- Days 1–6 complete
+- For the scheduled task section, Day 3 (at least one IM gateway configured) is ideal — that way the morning digest can push to Telegram / Discord etc.
+
+---
+
+## Part A · Scheduled tasks: let Hermes run on its own
+
+Hermes's built-in `cronjob` tool lets the agent **schedule and run its own tasks**. Conceptually similar to unix cron, but **every trigger is an independent agent session** (with its own tools, skills, and memory) — not a bare script.
+
+### Three ways to create a job
+
+<Steps>
+
+1. **Natural language (easiest)**
+
+   Start Hermes and say:
+
+   ```
+   You: Every morning at 9 AM, scan Hacker News, pick 3 AI-related stories, and send them to my Telegram.
+   ```
+
+   Hermes recognizes this as a scheduling request, calls `cronjob(action="create", ...)`, and tells you: job ID, schedule rule, and next trigger time.
+
+2. **Slash command inside a conversation**
+
+   ```
+   You: /cron add "0 9 * * *" "Scan HN, pick 3 AI stories, send to Telegram"
+   ```
+
+   Syntax: `/cron add <schedule> "<prompt>"`.
+
+3. **Terminal CLI**
+
+   ```bash
+   hermes cron create "0 9 * * *" "Scan HN, pick 3 AI stories, send to Telegram"
+   ```
+
+</Steps>
+
+### Schedule format
+
+All formats supported:
+
+| Format | Meaning |
+|--------|---------|
+| `30m`, `2h`, `1d` | **Relative delay, one-shot** (run once in 30 minutes) |
+| `every 30m`, `every 2h` | Recurring every N minutes/hours/days |
+| `0 9 * * *` | Standard cron: every day at 9:00 AM |
+| `0 */6 * * *` | Every 6 hours |
+| `2026-05-01T09:00:00` | ISO timestamp, one-shot at a specific moment |
+
+### Managing scheduled tasks
+
+```bash
+hermes cron list                      # list all jobs
+hermes cron status <job_id>           # details and last result for a specific job
+hermes cron edit <job_id> --schedule "0 10 * * *"
+hermes cron tick                      # immediately check for due jobs (for debugging)
+```
+
+Inside a conversation:
+
+```
+/cron list
+/cron run <job_id>      # trigger immediately, don't wait for the next scheduled time
+/cron pause <job_id>
+/cron resume <job_id>
+/cron remove <job_id>
+```
+
+### Running with a skill
+
+Load a skill (installed in Day 5) before the cron task runs:
+
+```
+You: Every morning at 9 AM, use the blogwatcher skill to summarize my RSS feeds and send to Telegram.
+```
+
+Hermes uses the skill as the agent's leading prompt, then stacks this task on top — effectively putting a Day 5 skill **into an unattended pipeline**.
+
+<Aside type="caution" title="Cron jobs cannot create other cron jobs">
+  A cron task cannot schedule another cron task — this prevents runaway recursion. For A-then-B sequencing, describe the order inside a skill, or use two independent cron jobs with time offsets.
 </Aside>
 
-## What this chapter covers
+<Aside type="tip" title="Silent mode: don't notify if there's nothing to report">
+  If a task run has nothing worth reporting, prefix the response with `[SILENT]`. The result won't push to your IM, but it will appear in `~/.hermes/cron/output/` audit logs. Great for monitoring tasks: "only bother me if something is wrong."
+</Aside>
 
-(Coming soon.)
+### When does the scheduler check?
 
-## Expected output
+The gateway (the long-running process from Day 3) checks for due jobs **every 60 seconds**. **If the gateway isn't running, cron won't trigger** — before relying on scheduled tasks, confirm:
 
-(The observable result after completing this chapter will be listed here.)
+```bash
+hermes gateway status      # confirm gateway is running
+```
 
-## Sources
+---
 
-- Hermes Agent official docs: https://hermes-agent.nousresearch.com/docs/
+## Part B · The diagnostic trio
+
+### `hermes doctor` — automated health check
+
+When anything strange happens, **this is the first command to run**:
+
+```bash
+hermes doctor
+hermes doctor --fix        # auto-fix anything it can
+```
+
+It checks: Python / Node / dependency versions, config file syntax, database integrity, provider auth validity, gateway status, skills directory permissions, and more.
+
+### `hermes status` — current system state
+
+```bash
+hermes status              # summary
+hermes status --all        # full detail (safe to paste into an issue — auto-redacts secrets)
+hermes status --deep       # with active probing (sends a test request to the provider — slightly slower)
+```
+
+Use `--all` when filing issues — it redacts API keys and other sensitive values to `sk-***` automatically.
+
+### `hermes logs` — log queries
+
+Logs live in `~/.hermes/logs/`. `hermes logs` is the query interface:
+
+| Log | What's inside |
+|-----|--------------|
+| `agent` (default) | API calls, tool dispatch, session activity |
+| `errors` | Warnings and errors only |
+| `gateway` | Platform connections, webhook events |
+
+Common scenarios:
+
+```bash
+hermes logs -f                         # tail in real time
+hermes logs errors --since 1h          # errors from the last hour
+hermes logs --level WARNING --since 30m
+hermes logs gateway -n 100             # last 100 lines of gateway logs
+hermes logs --session 7e4f2b8c         # all logs for a specific session
+```
+
+**Typical debugging flow:**
+
+```
+Symptom: Telegram bot isn't responding again
+
+1. hermes gateway status                  → is it still alive?
+2. hermes status --deep                   → is Telegram auth still valid?
+3. hermes logs gateway --since 30m -f     → last 30 minutes of gateway logs
+4. See 401 → re-run hermes gateway setup to refresh the token
+5. See rate limit → configure fallback_model (covered in Day 2)
+```
+
+---
+
+## Seven-day recap
+
+At this point you should have:
+
+| Day | Capability |
+|-----|-----------|
+| 1 | Running `hermes` locally, completed first conversation |
+| 2 | Chose a provider, configured a key, sent a reasoning test |
+| 3 | At least one IM (Telegram / Discord / Slack) can @-mention the bot |
+| 4 | Used at least 2 built-in tools: web_search and terminal |
+| 5 | Installed a first skill and triggered it in a conversation ✨ |
+| 6 | Know `~/.hermes/memories/`, `/compress`, and `hermes backup` |
+| 7 | Write cron jobs to let Hermes run autonomously; use doctor/status/logs to diagnose issues |
+
+---
+
+## What's next
+
+The 7 days cover the **minimum working loop**. Where to go deeper depends on your use case:
+
+| Direction | Where to learn |
+|-----------|---------------|
+| **Migrating from OpenClaw** | [Migrating from OpenClaw](/en/migrate/from-openclaw/) on this site |
+| **Embed Hermes in your own software** | [Official Developer Guide](https://hermes-agent.nousresearch.com/docs/developer-guide/contributing) |
+| **Write skills for your team** | Day 5 advanced section + [agentskills.io examples](https://agentskills.io/) |
+| **Connect internal services via MCP** | [Use MCP with Hermes](https://hermes-agent.nousresearch.com/docs/guides/use-mcp-with-hermes) |
+| **Voice interaction / self-hosting** | [Voice Mode](https://hermes-agent.nousresearch.com/docs/guides/use-voice-mode-with-hermes) / [Self-hosting](https://hermes-agent.nousresearch.com/docs/) |
+| **Read the official docs end-to-end** | [Official Learning Path](https://hermes-agent.nousresearch.com/docs/getting-started/learning-path) |
+
+This site will keep adding **"Field Recipes"** — each article focused on a specific workflow: code review agent, content aggregation bot, on-call operations assistant... complementary to this tutorial series.
+
+---
+
+## Troubleshooting
+
+<Aside type="danger" title="Cron job didn't run at the scheduled time">
+  99% of the time the gateway isn't running. Check:
+
+  ```bash
+  hermes gateway status
+  # Not running → hermes gateway start
+  # Status says running but still not triggering → hermes cron tick to see if manual trigger works
+  ```
+</Aside>
+
+<Aside type="danger" title="Cron triggered but result wasn't sent to Telegram">
+  Delivery channel wasn't specified. When creating the job, be explicit:
+
+  ```
+  You: Scan HN at 9 AM daily, send the result to Telegram (not local).
+  ```
+
+  Or edit the job: `hermes cron edit <job_id> --channel telegram`.
+</Aside>
+
+<Aside type="danger" title="hermes doctor --fix reports 'nothing to fix' but the problem remains">
+  `--fix` only handles issues it recognizes. Check `hermes logs errors --since 1h` for the specific error, then bring it to GitHub issues or the official Discord — include `hermes status --all` output (auto-redacted).
+</Aside>
+
+<Aside type="note" title="Moving this Hermes setup to another machine">
+  Use the Day 6 backup and restore flow:
+
+  ```bash
+  # On the original machine
+  hermes backup -o hermes-all.zip
+
+  # On the new machine (Hermes already installed)
+  hermes import hermes-all.zip
+  hermes gateway install && hermes gateway start
+  ```
+</Aside>
+
+<Aside type="note" title="Running lots of automation — how to save tokens?">
+  Use `fallback_model` in cron jobs to route to a cheaper model (covered in Day 2), or specify `model: kimi-for-coding` inside a skill to override — let routine repetitive tasks use a cheaper model, and save flagship models for important conversations.
+</Aside>
