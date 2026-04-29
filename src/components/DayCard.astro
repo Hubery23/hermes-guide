@@ -7,14 +7,16 @@ interface Props {
 	desc: string;
 	milestone?: boolean;
 	href: string;
+	locale?: 'en' | 'zh-CN';
 }
-const { num, day, titleZh, titleEn, desc, milestone = false, href } = Astro.props;
+const { num, day, titleZh, titleEn, desc, milestone = false, href, locale = 'zh-CN' } = Astro.props;
+const isEn = locale === 'en';
 ---
 <a class:list={['day', { highlight: milestone }]} href={href}>
 	{milestone && <span class="tape">★ MILESTONE</span>}
 	{num && <div class="d-num">{num}</div>}
-	<div class="d-title-zh">{titleZh}</div>
-	<div class="d-title-en">{titleEn}</div>
+	<div class="d-title-zh">{isEn ? titleEn : titleZh}</div>
+	<div class="d-title-en">{isEn ? titleZh : titleEn}</div>
 	<p class="d-desc">{desc}</p>
 	<div class="d-foot">
 		<span>{day}</span>

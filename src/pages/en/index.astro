@@ -73,7 +73,7 @@ const days = [
 	<section class="days" id="days">
 		<SectionHead num={t('days.section.num')} title={t('days.section.title')} en={t('days.section.en')} desc={t('days.section.desc')} />
 		<div class="day-grid">
-			{days.map((d) => <DayCard {...d} />)}
+			{days.map((d) => <DayCard {...d} locale={locale} />)}
 		</div>
 	</section>
 
