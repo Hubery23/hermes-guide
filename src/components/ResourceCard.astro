@@ -1,0 +1,107 @@
+---
+import type { Resource } from '@/data/resources'
+
+interface Props {
+  resource: Resource
+  locale: 'en' | 'zh-CN'
+}
+
+const { resource, locale } = Astro.props
+const desc = locale === 'en' ? resource.descEn : resource.desc
+---
+
+<a
+  href={resource.url}
+  target="_blank"
+  rel="noopener noreferrer"
+  class="resource-card"
+>
+  <div class="card-top">
+    <span class="card-title">{resource.title}</span>
+    <svg class="card-ext" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M3 13L13 3M13 3H7M13 3v6"/>
+    </svg>
+  </div>
+  <p class="card-desc">{desc}</p>
+  <div class="card-tags">
+    {resource.tags.map(tag => (
+      <span class={`tag tag-${tag}`}>{tag}</span>
+    ))}
+  </div>
+</a>
+
+<style>
+  .resource-card {
+    background: #fff;
+    border-radius: 3px;
+    border: 1px solid var(--sand);
+    border-top-width: 3px;
+    padding: 18px 20px 16px;
+    text-decoration: none;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 1px 3px rgba(43,43,46,.08), 0 4px 12px rgba(43,43,46,.04);
+    transition: box-shadow .2s, transform .2s;
+  }
+  .resource-card:hover {
+    box-shadow: 0 2px 8px rgba(43,43,46,.12), 0 8px 24px rgba(43,43,46,.08);
+    transform: translateY(-1px);
+  }
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .card-title {
+    font-family: 'Bricolage Grotesque Variable', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    color: var(--ink);
+  }
+  .card-ext {
+    flex-shrink: 0;
+    color: var(--ink-faint);
+    transition: color .15s;
+  }
+  .resource-card:hover .card-ext { color: var(--tang); }
+  .card-desc {
+    font-size: 13px;
+    color: var(--ink-muted);
+    line-height: 1.55;
+    flex: 1;
+  }
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+  }
+  .tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: .04em;
+    padding: 2px 7px;
+    border-radius: 2px;
+    line-height: 1.6;
+  }
+  .tag-官方, .tag-入口, .tag-必读 { background: #fff3ee; color: #c2410c; }
+  .tag-文档, .tag-路线图, .tag-系统 { background: #eff6ff; color: #1d4ed8; }
+  .tag-源码, .tag-GitHub            { background: #f4f4f5; color: #52525b; }
+  .tag-视频                         { background: #fef2f2; color: #b91c1c; }
+  .tag-入门                         { background: #ecfdf5; color: #065f46; }
+  .tag-英文                         { background: #fafaf9; color: #78716c; border: 1px solid #e7e5e4; }
+  .tag-文章                         { background: #f5f3ff; color: #6d28d9; }
+  .tag-开发者                       { background: #fff7ed; color: #c2410c; }
+  .tag-对比                         { background: #fdf4ff; color: #7e22ce; }
+  .tag-深度                         { background: #f5f3ff; color: #6d28d9; }
+  .tag-精选                         { background: #fff3ee; color: #c2410c; }
+  .tag-社区                         { background: #ecfdf5; color: #065f46; }
+  .tag-Reddit                       { background: #fff7ed; color: #c2410c; }
+  .tag-HN                           { background: #fff3ee; color: #c2410c; }
+</style>
