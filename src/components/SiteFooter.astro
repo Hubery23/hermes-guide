@@ -11,13 +11,12 @@ const t = useT(locale);
 	<span>HERMES AGENT</span>
 	<span class="spacer"></span>
 	<a href="https://github.com/Hubery23/hermes-guide" rel="noopener" target="_blank">{t('footer.github')} ↗</a>
-	<span>{t('footer.rss')}</span>
 </footer>
 
 <style>
 	footer {
 		background: var(--ink);
-		color: var(--ink-muted);
+		color: var(--sand);
 		padding: 24px 32px;
 		font-family: var(--font-mono);
 		font-size: 10px;
@@ -30,6 +29,6 @@ const t = useT(locale);
 	}
 	.sep { color: var(--tang); }
 	.spacer { flex: 1; }
-	a { color: var(--ink-faint); text-decoration: none; }
-	a:hover { color: var(--sand); }
+	a { color: var(--sand); text-decoration: none; }
+	a:hover { color: var(--tang); }
 </style>
