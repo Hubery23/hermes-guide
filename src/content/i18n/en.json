@@ -54,6 +54,7 @@
   "meta.7days.description": "From first install to scheduled tasks: 7-day Hermes Agent course covering model setup, messaging integrations, built-in tools, skills, memory, and diagnostics.",
   "meta.faq.title": "Hermes Agent FAQ · 14 Questions New Users Ask Most",
   "meta.faq.description": "Practical Hermes Agent FAQ: Windows / WSL setup, hardware, OpenAI-compatible providers (DeepSeek, Kimi, GLM), messaging integrations, memory vs skills, OpenClaw migration, privacy, and troubleshooting.",
+  "meta.resources.title": "Hermes Agent Resources | Hermes Agent Guide",
   "resources.badge": "Curated · Continuously Updated",
   "resources.h1": "Hermes Agent",
   "resources.h1.em": "Resources",

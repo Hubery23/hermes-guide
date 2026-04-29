@@ -1,8 +1,9 @@
 ---
-import MarketingLayout from '@/layouts/MarketingLayout.astro'
-import ResourceCard from '@/components/ResourceCard.astro'
-import { useT } from '@/lib/i18n'
-import { detectLocale } from '@/lib/locale'
+import MarketingLayout from '@layouts/MarketingLayout.astro'
+import ResourceCard from '@components/ResourceCard.astro'
+import { useT } from '@lib/i18n'
+import { detectLocale } from '@lib/locale'
+import { breadcrumbSchema } from '@lib/schemas'
 import { resources, RESOURCE_CATEGORIES, CATEGORY_CONFIG } from '@/data/resources'
 
 const locale = detectLocale(Astro.url.pathname)
@@ -10,6 +11,11 @@ const t = useT(locale)
 
 const totalCount = resources.length
 const categoryCount = RESOURCE_CATEGORIES.length
+
+const breadcrumb = breadcrumbSchema([
+  { name: 'Hermes Agent 中文指南', path: '/' },
+  { name: t('resources.h1.em'), path: '/resources/' },
+])
 
 const categoryCatKeys: Record<string, string> = {
   official: 'resources.cat.official',
@@ -29,8 +35,10 @@ const categorySubKeys: Record<string, string> = {
 
 <MarketingLayout
   locale={locale}
-  title={`Hermes Agent ${t('resources.h1.em')} | Hermes Agent 中文指南`}
+  title={t('meta.resources.title')}
   description={t('resources.subtitle')}
+  ogImage="/og/docs.png"
+  schema={[breadcrumb]}
 >
   <section class="resources-hero">
     <div class="hero-badge">

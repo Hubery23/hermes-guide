@@ -54,6 +54,7 @@
   "meta.7days.description": "从装机到定时任务，7 天打通 Hermes Agent 全流程：模型选型、IM 接入、内置工具、Skills、记忆、故障排查。每章一小时内完成，Mac / Linux / WSL 通用。",
   "meta.faq.title": "Hermes Agent 常见问题 FAQ · 14 个新手最常踩的坑",
   "meta.faq.description": "Hermes Agent 中文 FAQ：Windows 支持、国产模型接入（DeepSeek / Kimi / GLM）、微信 / Telegram 接入、Memory vs Skills、OpenClaw 迁移、隐私与排错——14 个亲测过的真实问题。",
+  "meta.resources.title": "Hermes Agent 资源导航 | Hermes Agent 中文指南",
   "resources.badge": "精选资源 · 持续更新",
   "resources.h1": "Hermes Agent",
   "resources.h1.em": "资源导航",

@@ -154,7 +154,7 @@ export interface CategoryConfig {
 
 export const CATEGORY_CONFIG: Record<ResourceCategory, CategoryConfig> = {
   official: {
-    accentColor: '#f5713a',
+    accentColor: 'var(--tang)',
     bgColor: '#fff3ee',
     iconColor: '#c2410c',
     num: '01',
