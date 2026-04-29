@@ -1,11 +1,13 @@
 ---
 import { swapLocalePath, type Locale } from '@lib/locale';
 import { useT } from '@lib/i18n';
+import LangSwitcher from './LangSwitcher.astro';
 
 interface Props {
 	locale: Locale;
+	pathname: string;
 }
-const { locale } = Astro.props;
+const { locale, pathname } = Astro.props;
 const t = useT(locale);
 const lp = (p: string) => swapLocalePath(p, locale);
 
@@ -24,11 +26,17 @@ const startHreflang = locale === 'en' ? 'zh-CN' : undefined;
 		<li><a href={lp('/migrate/')}>{t('nav.migrate')}</a></li>
 		<li><a href={lp('/faq/')}>{t('nav.faq')}</a></li>
 	</ul>
+	<div class="lang-wrap">
+		<LangSwitcher locale={locale} pathname={pathname} />
+	</div>
 	<a href={startHref} hreflang={startHreflang} class="cta">◉ {t('nav.start')}</a>
 </nav>
 
 <style>
 	.nav {
+		position: sticky;
+		top: 0;
+		z-index: 100;
 		display: flex;
 		align-items: center;
 		padding: 18px 32px;
@@ -58,8 +66,10 @@ const startHreflang = locale === 'en' ? 'zh-CN' : undefined;
 	}
 	ul a { color: var(--ink); text-decoration: none; }
 	ul a:hover { color: var(--tang); }
-	.cta {
+	.lang-wrap {
 		margin-left: auto;
+	}
+	.cta {
 		background: var(--tang);
 		color: var(--ink);
 		padding: 10px 18px;
@@ -69,6 +79,16 @@ const startHreflang = locale === 'en' ? 'zh-CN' : undefined;
 		letter-spacing: 2px;
 		text-transform: uppercase;
 		text-decoration: none;
+	}
+	.lang-wrap :global(.lang) {
+		border-color: var(--ink);
+	}
+	.lang-wrap :global(.lang-btn) {
+		color: var(--ink);
+	}
+	.lang-wrap :global(.lang-btn.on) {
+		background: var(--ink);
+		color: var(--sand);
 	}
 	@media (max-width: 760px) {
 		.nav { flex-wrap: wrap; padding: 14px 16px; gap: 14px; }

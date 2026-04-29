@@ -1,6 +1,5 @@
 ---
 import type { Locale } from '@lib/locale';
-import WarningStrip from '@components/WarningStrip.astro';
 import SiteNav from '@components/SiteNav.astro';
 import SiteFooter from '@components/SiteFooter.astro';
 import SEO from '@components/SEO.astro';
@@ -103,8 +102,7 @@ const {
 		{schema && <Schema schema={schema} />}
 	</head>
 	<body>
-		<WarningStrip locale={locale} pathname={Astro.url.pathname} />
-		<SiteNav locale={locale} />
+		<SiteNav locale={locale} pathname={Astro.url.pathname} />
 		<main>
 			<slot />
 		</main>
