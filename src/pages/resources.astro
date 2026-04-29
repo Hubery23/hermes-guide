@@ -1,0 +1,241 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro'
+import ResourceCard from '@/components/ResourceCard.astro'
+import { useT } from '@/lib/i18n'
+import { detectLocale } from '@/lib/locale'
+import { resources, RESOURCE_CATEGORIES, CATEGORY_CONFIG } from '@/data/resources'
+
+const locale = detectLocale(Astro.url.pathname)
+const t = useT(locale)
+
+const totalCount = resources.length
+const categoryCount = RESOURCE_CATEGORIES.length
+
+const categoryCatKeys: Record<string, string> = {
+  official: 'resources.cat.official',
+  video: 'resources.cat.video',
+  article: 'resources.cat.article',
+  github: 'resources.cat.github',
+  community: 'resources.cat.community',
+}
+const categorySubKeys: Record<string, string> = {
+  official: 'resources.cat.official_sub',
+  video: 'resources.cat.video_sub',
+  article: 'resources.cat.article_sub',
+  github: 'resources.cat.github_sub',
+  community: 'resources.cat.community_sub',
+}
+---
+
+<MarketingLayout
+  locale={locale}
+  title={`Hermes Agent ${t('resources.h1.em')} | Hermes Agent 中文指南`}
+  description={t('resources.subtitle')}
+>
+  <section class="resources-hero">
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      {t('resources.badge')}
+    </div>
+    <h1>{t('resources.h1')} <em>{t('resources.h1.em')}</em></h1>
+    <p class="hero-desc">{t('resources.subtitle')}</p>
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-num accent">{totalCount}</span>
+        <span class="stat-label">{t('resources.stats.count')}</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">{categoryCount}</span>
+        <span class="stat-label">{t('resources.stats.categories')}</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">{t('resources.stats.review')}</span>
+        <span class="stat-label">{t('resources.stats.review_label')}</span>
+      </div>
+    </div>
+  </section>
+
+  <main class="resources-main">
+    {RESOURCE_CATEGORIES.map((cat, idx) => {
+      const config = CATEGORY_CONFIG[cat]
+      const catResources = resources.filter(r => r.category === cat)
+      return (
+        <section
+          class="cat-section"
+          style={`--cat-accent: ${config.accentColor}; --cat-bg: ${config.bgColor}; --cat-icon-color: ${config.iconColor};`}
+        >
+          <div class="section-divider">
+            <div class="divider-line"></div>
+            <span class="divider-num">{String(idx + 1).padStart(2, '0')} / {String(RESOURCE_CATEGORIES.length).padStart(2, '0')}</span>
+            <div class="divider-line"></div>
+          </div>
+          <div class="cat-header">
+            <div class="cat-icon" set:html={config.iconSvg} />
+            <div>
+              <h2 class="cat-title">{t(categoryCatKeys[cat])}</h2>
+              <p class="cat-sub">{t(categorySubKeys[cat])}</p>
+            </div>
+          </div>
+          <div class="cards-grid">
+            {catResources.map(r => (
+              <ResourceCard resource={r} locale={locale} />
+            ))}
+          </div>
+        </section>
+      )
+    })}
+
+    <footer class="resources-footer">
+      <p class="footer-note">{t('resources.footer')}</p>
+    </footer>
+  </main>
+</MarketingLayout>
+
+<style>
+  .resources-hero {
+    padding: 72px 48px 48px;
+    max-width: 960px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--sand);
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--tang);
+    border: 1px solid var(--tang);
+    padding: 4px 10px;
+    border-radius: 2px;
+    margin-bottom: 24px;
+  }
+  .badge-dot {
+    width: 6px; height: 6px;
+    background: var(--tang);
+    border-radius: 50%;
+  }
+  .resources-hero h1 {
+    font-family: 'Bricolage Grotesque Variable', sans-serif;
+    font-weight: 800;
+    font-size: clamp(36px, 5vw, 56px);
+    line-height: 1.05;
+    letter-spacing: -.03em;
+    color: var(--ink);
+    margin-bottom: 20px;
+    white-space: nowrap;
+  }
+  .resources-hero h1 em {
+    font-style: normal;
+    color: var(--tang);
+  }
+  .hero-desc {
+    font-size: 16px;
+    color: var(--ink-muted);
+    line-height: 1.7;
+    margin-bottom: 40px;
+    white-space: nowrap;
+  }
+  .hero-stats {
+    display: flex;
+    gap: 40px;
+  }
+  .stat { display: flex; flex-direction: column; gap: 2px; }
+  .stat-num {
+    font-family: 'Bricolage Grotesque Variable', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -.04em;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .stat-num.accent { color: var(--tang); }
+  .stat-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+  .resources-main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 48px 96px;
+  }
+  .cat-section { padding-top: 40px; }
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+  }
+  .divider-line { flex: 1; height: 1px; background: var(--sand); }
+  .divider-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: .1em;
+  }
+  .cat-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-top: 24px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--sand);
+  }
+  .cat-icon {
+    width: 36px; height: 36px;
+    border-radius: 3px;
+    background: var(--cat-bg);
+    color: var(--cat-icon-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .cat-title {
+    font-family: 'Bricolage Grotesque Variable', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: -.02em;
+    color: var(--ink);
+    line-height: 1.2;
+    margin-bottom: 2px;
+  }
+  .cat-sub {
+    font-size: 13px;
+    color: var(--ink-faint);
+  }
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .cat-section :global(.resource-card) {
+    border-top-color: var(--cat-accent);
+  }
+  .resources-footer {
+    margin-top: 56px;
+    padding-top: 20px;
+    border-top: 1px solid var(--sand);
+  }
+  .footer-note {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: .04em;
+  }
+  @media (max-width: 640px) {
+    .resources-hero { padding: 48px 20px 32px; }
+    .resources-main { padding: 0 20px 64px; }
+    .cards-grid { grid-template-columns: 1fr; }
+    .hero-stats { gap: 24px; }
+    .resources-hero h1 { white-space: normal; font-size: 32px; }
+    .hero-desc { white-space: normal; }
+  }
+</style>
