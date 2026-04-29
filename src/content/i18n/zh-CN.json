@@ -46,7 +46,7 @@
   "coming_soon.body": "中文版已上线，英文翻译欢迎 PR 贡献。",
   "coming_soon.cta": "到 GitHub 提交翻译",
   "meta.home.title": "Hermes Agent 中文指南｜自托管 AI Agent 学习站，含 7 天教程与 OpenClaw 迁移",
-  "meta.home.description": "Hermes Agent 中文学习站：自托管 AI Agent 全流程指南，涵盖 7 天教程、模型选型、Telegram / 微信 / Discord 接入、Skills 与记忆、从 OpenClaw 迁移。所有命令亲测可复现，100% 开源 MIT。",
+  "meta.home.description": "Hermes Agent 5分钟安装，7天精通。Hermes Agent 中文入门指南。",
   "meta.migrate.title": "从 OpenClaw 迁移到 Hermes Agent ｜ 映射表 + 完整步骤",
   "meta.migrate.description": "OpenClaw 与 Hermes Agent 概念一一对应。亲测过的迁移映射表：Skills / 记忆 / 工具链 / Bot 配置一键搬家，含 hermes claw migrate 命令详解。",
   "meta.7days.title": "Hermes Agent 七日入门教程 · 每天 30 分钟，7 天精通",
